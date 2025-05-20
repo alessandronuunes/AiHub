@@ -1,0 +1,11 @@
+{
+    "name": "AiHub",
+    "alias": "aihub",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\AiHub\\Providers\\AiHubServiceProvider"
+    ],
+    "files": []
+}

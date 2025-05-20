@@ -1,62 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# OpenAI RAG Module - Comandos Artisan
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este módulo fornece uma série de comandos Artisan para gerenciar Assistentes, Threads e Vector Stores no OpenAI RAG (Retrieval Augmented Generation).
 
-## About Laravel
+## Visão Geral
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+O módulo oferece comandos para:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Assistentes**: Criar, listar, atualizar e deletar assistentes OpenAI
+2. **Vector Stores**: Criar, listar, vincular e remover bases de conhecimento
+3. **Threads**: Criar conversas, listar mensagens e enviar mensagens para assistentes
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Todos os comandos seguem um padrão de design consistente, com separação clara de responsabilidades e encapsulamento adequado.
 
-## Learning Laravel
+## Comandos Disponíveis
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Assistentes
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Comando | Descrição |
+|---------|-----------|
+| `ai:assistant-create [name] [instructions]` | Cria um novo assistente OpenAI |
+| `ai:assistant-list [company] [--interactive]` | Lista todos os assistentes disponíveis |
+| `ai:assistant-update [name]` | Atualiza um assistente existente |
+| `ai:assistant-delete [name]` | Remove um assistente existente |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Vector Stores (Bases de Conhecimento)
 
-## Laravel Sponsors
+| Comando | Descrição |
+|---------|-----------|
+| `ai:knowledge-add [company] [--name=] [--description=] [--interactive]` | Cria uma nova Vector Store para documentos |
+| `ai:knowledge-list [company] [--interactive]` | Lista todas as bases de conhecimento |
+| `ai:knowledge-link [company] [--interactive]` | Associa uma Vector Store a um Assistente |
+| `ai:knowledge-remove [company] [--interactive]` | Remove uma Vector Store |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Threads (Conversas)
 
-### Premium Partners
+| Comando | Descrição |
+|---------|-----------|
+| `ai:chat-start [company] [--interactive]` | Inicia uma nova conversa com um assistente |
+| `ai:chat-active [company] [--interactive]` | Lista todas as conversas ativas |
+| `ai:chat-list [thread_id] [--limit=10] [--interactive]` | Lista as mensagens de uma conversa |
+| `ai:chat-send [thread_id] [--message=] [--interactive]` | Envia uma mensagem para uma conversa existente |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+## Estrutura e Padrões de Design
 
-## Contributing
+Todos os comandos foram implementados seguindo princípios SOLID, especialmente o princípio de responsabilidade única (SRP). Cada comando segue a mesma estrutura geral:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Propriedades da classe**: Armazenam o estado do comando durante a execução
+2. **Método handle()**: Ponto de entrada principal, coordena o fluxo de execução
+3. **Métodos específicos**: Cada responsabilidade tem seu próprio método dedicado
+4. **Tratamento de erros**: Implementado em cada etapa para garantir robustez
 
-## Code of Conduct
+## Modo Interativo
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Todos os comandos suportam um modo interativo (flag `--interactive`), que orienta o usuário através de diálogos. Este modo é especialmente útil para usuários iniciantes.
 
-## Security Vulnerabilities
+## Exemplos de Uso
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Criar um novo assistente:
 
-## License
+```bash
+php artisan ai:assistant-create "Assistente de Suporte" "Este assistente ajuda com suporte técnico"
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# chat-rag
+### Listar assistentes disponíveis:
+
+```bash
+php artisan ai:assistant-list minha-empresa
+```
+
+### Criar uma base de conhecimento:
+
+```bash
+php artisan ai:knowledge-add minha-empresa --name="Documentação Técnica" --description="Base de conhecimento para documentação técnica"
+```
+
+### Vincular uma base de conhecimento a um assistente:
+
+```bash
+php artisan ai:knowledge-link minha-empresa
+```
+
+### Iniciar uma nova conversa:
+
+```bash
+php artisan ai:chat-start minha-empresa --interactive
+```
+
+### Enviar uma mensagem:
+
+```bash
+php artisan ai:chat-send --message="Olá, preciso de ajuda com configuração"
+```
+
+## Requisitos
+
+- PHP 8.1+
+- Laravel 10+
+- Conta OpenAI com acesso à API de Assistentes
+- Módulo OpenAiRag configurado corretamente
+
+## Estrutura de Arquivos
+
+```
+Modules/OpenAiRag/
+├── Console/
+│   ├── Ia/
+│   │   ├── Assistant/
+│   │   │   ├── CreateChatCommand.php
+│   │   │   ├── DeleteChatCommand.php
+│   │   │   ├── ListAssistantCommand.php
+│   │   │   └── UpdateChatCommand.php
+│   │   ├── Thread/
+│   │   │   ├── CreateThreadCommand.php
+│   │   │   ├── ListMessagesCommand.php
+│   │   │   ├── ListThreadCommand.php
+│   │   │   └── SendMessageCommand.php
+│   │   └── VectorStore/
+│   │       ├── AttachVectorCommand.php
+│   │       ├── CreateVectorCommand.php
+│   │       ├── DeleteVectorCommand.php
+│   │       └── ListVectorCommand.php
+├── Models/
+│   ├── Assistant.php
+│   ├── Company.php
+│   ├── Message.php
+│   ├── Thread.php
+│   └── VectorStore.php
+└── Services/
+    ├── OpenAIService.php
+    ├── ThreadService.php
+    └── VectorStoreService.php
+```
+
+## Boas Práticas Implementadas
+
+1. **Responsabilidade Única**: Cada método tem uma única responsabilidade bem definida
+2. **Encapsulamento**: Variáveis de estado são propriedades da classe, não variáveis locais
+3. **Documentação**: Todos os métodos possuem comentários de documentação (PHPDoc)
+4. **Tratamento de Erros**: Pontos de falha são tratados e reportados adequadamente
+5. **Feedback ao Usuário**: Mensagens claras sobre o progresso da operação
+6. **Validação de Entrada**: Dados fornecidos pelo usuário são validados antes do uso
+7. **Fluxo de Controle**: O fluxo de execução é claro e consistente entre comandos
+
+## Contribuindo
+
+Para contribuir com este módulo:
+
+1. Siga o mesmo padrão de design implementado nos comandos existentes
+2. Certifique-se de implementar tratamento de erros adequado
+3. Inclua comentários de documentação (PHPDoc) em todos os métodos
+4. Execute testes antes de submeter alterações
+
+---
+
+© 2025 - Desenvolvido com Laravel, PHP e OpenAI

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\OpenAiRag\Models;
+namespace Modules\AiHub\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
