@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\VectorStore;
+namespace Modules\AiHub\Console\Ai\VectorStore;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -15,23 +15,23 @@ use function Laravel\Prompts\table;
 class ListVectorCommand extends Command
 {
     protected $signature = 'ai:knowledge-list
-        {company? : Slug da empresa}
-        {--interactive : Modo interativo com perguntas}';
+        {company? : Company slug}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Lista todas as bases de conhecimento (Vector Stores)';
+    protected $description = 'Lists all knowledge bases (Vector Stores)';
 
     /**
-     * Empresa selecionada
+     * Selected company
      */
     protected Company $company;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -40,27 +40,27 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
         try {
-            info("\n📚 Listagem de Bases de Conhecimento\n");
+            info("\n📚 Knowledge Bases Listing\n");
 
-            // Seleciona a empresa
+            // Select the company
             if (! $this->selectCompany()) {
                 return 1;
             }
 
-            // Configura o aiService para a empresa selecionada
+            // Configure aiService for the selected company
             $this->aiService->forCompany($this->company->slug);
 
-            // Lista as Vector Stores da empresa
+            // List the company's Vector Stores
             if (! $this->listCompanyVectorStores()) {
                 return 0;
             }
 
-            // Oferece opções adicionais no modo interativo
+            // Offer additional options in interactive mode
             if ($this->option('interactive')) {
                 $this->offerAdditionalOptions();
             }
@@ -68,16 +68,16 @@ class ListVectorCommand extends Command
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar bases de conhecimento: ".$e->getMessage());
+            error("\n❌ Error listing knowledge bases: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Seleciona a empresa para listar as Vector Stores
+     * Selects the company to list Vector Stores
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompany(): bool
     {
@@ -91,22 +91,22 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Seleciona a empresa interativamente
+     * Selects the company interactively
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompanyInteractively(): bool
     {
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error('❌ Nenhuma empresa cadastrada!');
+            error('❌ No companies registered!');
 
             return false;
         }
 
         $companySlug = select(
-            label: 'Selecione a empresa:',
+            label: 'Select the company:',
             options: $companies
         );
 
@@ -114,17 +114,17 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Encontra a empresa pelo slug
+     * Finds the company by slug
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool true se a empresa foi encontrada, false caso contrário
+     * @param  string  $companySlug  Company slug
+     * @return bool true if the company was found, false otherwise
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = Company::where('slug', $companySlug)->first();
 
         if (! $this->company) {
-            error("❌ Empresa não encontrada: {$companySlug}");
+            error("❌ Company not found: {$companySlug}");
 
             return false;
         }
@@ -133,16 +133,16 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Lista as Vector Stores da empresa selecionada
+     * Lists the Vector Stores of the selected company
      *
-     * @return bool true se Vector Stores foram encontradas, false caso contrário
+     * @return bool true if Vector Stores were found, false otherwise
      */
     private function listCompanyVectorStores(): bool
     {
         $vectorStores = $this->getCompanyVectorStores();
 
         if ($vectorStores->isEmpty()) {
-            info("ℹ️ Nenhuma base de conhecimento encontrada para a empresa {$this->company->name}");
+            info("ℹ️ No knowledge bases found for company {$this->company->name}");
 
             return false;
         }
@@ -153,9 +153,9 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Busca as Vector Stores da empresa selecionada
+     * Retrieves the Vector Stores of the selected company
      *
-     * @return \Illuminate\Database\Eloquent\Collection Coleção de Vector Stores
+     * @return \Illuminate\Database\Eloquent\Collection Collection of Vector Stores
      */
     private function getCompanyVectorStores()
     {
@@ -163,42 +163,42 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Exibe as Vector Stores em formato de tabela
+     * Displays the Vector Stores in table format
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $vectorStores  Coleção de Vector Stores
+     * @param  \Illuminate\Database\Eloquent\Collection  $vectorStores  Collection of Vector Stores
      */
     private function displayVectorStoresTable($vectorStores): void
     {
-        // Prepara os dados para a tabela
+        // Prepare data for the table
         $tableData = $this->prepareVectorStoresTableData($vectorStores);
 
-        // Exibe a tabela
+        // Display the table
         table(
-            ['ID', 'Nome', 'Descrição', 'Criado em'],
+            ['ID', 'Name', 'Description', 'Created at'],
             $tableData
         );
     }
 
     /**
-     * Prepara os dados das Vector Stores para exibição em tabela
+     * Prepares Vector Stores data for table display
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $vectorStores  Coleção de Vector Stores
-     * @return array Dados formatados para a tabela
+     * @param  \Illuminate\Database\Eloquent\Collection  $vectorStores  Collection of Vector Stores
+     * @return array Formatted data for the table
      */
     private function prepareVectorStoresTableData($vectorStores): array
     {
         return $vectorStores->map(function ($vectorStore) {
             return [
                 'ID' => $vectorStore->vector_store_id,
-                'Nome' => $vectorStore->name,
-                'Descrição' => $vectorStore->description ?: 'N/A',
-                'Criado em' => $vectorStore->created_at->format('d/m/Y H:i'),
+                'Name' => $vectorStore->name,
+                'Description' => $vectorStore->description ?: 'N/A',
+                'Created at' => $vectorStore->created_at->format('d/m/Y H:i'),
             ];
         })->toArray();
     }
 
     /**
-     * Oferece opções adicionais no modo interativo
+     * Offers additional options in interactive mode
      */
     private function offerAdditionalOptions(): void
     {
@@ -209,13 +209,13 @@ class ListVectorCommand extends Command
         }
 
         $action = select(
-            label: 'O que você deseja fazer?',
+            label: 'What would you like to do?',
             options: [
-                'view_files' => 'Ver arquivos de uma Vector Store',
-                'create' => 'Criar nova Vector Store',
-                'delete' => 'Deletar uma Vector Store',
-                'attach' => 'Vincular uma Vector Store a um Assistente',
-                'exit' => 'Sair',
+                'view_files' => 'View files of a Vector Store',
+                'create' => 'Create new Vector Store',
+                'delete' => 'Delete a Vector Store',
+                'attach' => 'Link a Vector Store to an Assistant',
+                'exit' => 'Exit',
             ]
         );
 
@@ -248,7 +248,7 @@ class ListVectorCommand extends Command
     }
 
     /**
-     * Exibe os arquivos de uma Vector Store selecionada
+     * Displays the files of a selected Vector Store
      */
     private function viewVectorStoreFiles(): void
     {
@@ -256,7 +256,7 @@ class ListVectorCommand extends Command
         $vectorStoreChoices = $vectorStores->pluck('name', 'vector_store_id')->toArray();
 
         $vectorStoreId = select(
-            label: 'Selecione a Vector Store:',
+            label: 'Select the Vector Store:',
             options: $vectorStoreChoices
         );
 
@@ -265,23 +265,23 @@ class ListVectorCommand extends Command
             ->first();
 
         if (! $vectorStore) {
-            error('❌ Vector Store não encontrada!');
+            error('❌ Vector Store not found!');
 
             return;
         }
 
         $files = spin(
             fn () => $this->aiService->vectorStore()->listFiles($vectorStoreId),
-            'Listando arquivos...'
+            'Listing files...'
         );
 
         if (empty($files->data)) {
-            info("\nEsta Vector Store não possui arquivos anexados.");
+            info("\nThis Vector Store has no attached files.");
 
             return;
         }
 
-        info("\nArquivos na Vector Store {$vectorStore->name}:");
+        info("\nFiles in Vector Store {$vectorStore->name}:");
         foreach ($files->data as $index => $file) {
             $item = $index + 1;
             info(" {$item}. ID: {$file->id}");
