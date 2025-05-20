@@ -10,8 +10,8 @@ use Modules\AiHub\Ai\Contracts\VectorStore;
 use Modules\AiHub\Ai\Factory\AiFactory;
 
 /**
- * Serviço principal para interagir com provedores de IA.
- * Atua como um ponto de entrada e fachada para os diferentes serviços de IA (Assistant, Thread, etc.).
+ * Main service for interacting with AI providers.
+ * Acts as an entry point and facade for different AI services (Assistant, Thread, etc.).
  */
 class AiService
 {
@@ -22,9 +22,9 @@ class AiService
     protected ?string $defaultCompanySlug = null;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  AiFactory  $factory  Instância da fábrica de IA.
+     * @param  AiFactory  $factory  AI factory instance.
      */
     public function __construct(AiFactory $factory)
     {
@@ -32,9 +32,9 @@ class AiService
     }
 
     /**
-     * Define o provedor de IA padrão para esta instância do serviço.
+     * Sets the default AI provider for this service instance.
      *
-     * @param  string  $provider  O nome do provedor (ex: 'openai').
+     * @param  string  $provider  The provider name (e.g.: 'openai').
      * @return $this
      */
     public function provider(string $provider): self
@@ -45,9 +45,9 @@ class AiService
     }
 
     /**
-     * Define o slug da empresa padrão para esta instância do serviço.
+     * Sets the default company slug for this service instance.
      *
-     * @param  string|null  $companySlug  O slug da empresa.
+     * @param  string|null  $companySlug  The company slug.
      * @return $this
      */
     public function forCompany(?string $companySlug): self
@@ -58,10 +58,10 @@ class AiService
     }
 
     /**
-     * Obtém a instância do cliente de IA configurado.
+     * Gets the configured AI client instance.
      *
-     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
-     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
+     * @param  string|null  $provider  The provider name (if different from default).
+     * @param  string|null  $companySlug  The company slug (if different from default).
      */
     protected function getAiClient(?string $provider = null, ?string $companySlug = null): Ai
     {
@@ -70,7 +70,7 @@ class AiService
 
         $client = $this->factory->create($providerToUse, $companySlugToUse);
 
-        // Resetar defaults após obter o cliente, para não afetar chamadas futuras
+        // Reset defaults after getting the client, to avoid affecting future calls
         $this->defaultProvider = null;
         $this->defaultCompanySlug = null;
 
@@ -78,10 +78,10 @@ class AiService
     }
 
     /**
-     * Obtém o serviço de Assistente do provedor de IA configurado.
+     * Gets the Assistant service from the configured AI provider.
      *
-     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
-     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
+     * @param  string|null  $provider  The provider name (if different from default).
+     * @param  string|null  $companySlug  The company slug (if different from default).
      */
     public function assistant(?string $provider = null, ?string $companySlug = null): Assistant
     {
@@ -89,10 +89,10 @@ class AiService
     }
 
     /**
-     * Obtém o serviço de Thread do provedor de IA configurado.
+     * Gets the Thread service from the configured AI provider.
      *
-     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
-     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
+     * @param  string|null  $provider  The provider name (if different from default).
+     * @param  string|null  $companySlug  The company slug (if different from default).
      */
     public function thread(?string $provider = null, ?string $companySlug = null): Thread
     {
@@ -100,10 +100,10 @@ class AiService
     }
 
     /**
-     * Obtém o serviço de Vector Store do provedor de IA configurado.
+     * Gets the Vector Store service from the configured AI provider.
      *
-     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
-     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
+     * @param  string|null  $provider  The provider name (if different from default).
+     * @param  string|null  $companySlug  The company slug (if different from default).
      */
     public function vectorStore(?string $provider = null, ?string $companySlug = null): VectorStore
     {
@@ -111,17 +111,17 @@ class AiService
     }
 
     /**
-     * Obtém o serviço de Arquivo do provedor de IA configurado.
+     * Gets the File service from the configured AI provider.
      *
-     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
-     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
+     * @param  string|null  $provider  The provider name (if different from default).
+     * @param  string|null  $companySlug  The company slug (if different from default).
      */
     public function file(?string $provider = null, ?string $companySlug = null): File
     {
         return $this->getAiClient($provider, $companySlug)->file();
     }
 
-    // Exemplo de como você pode adicionar métodos de conveniência diretamente aqui
+    // Example of how you can add convenience methods directly here
     // public function createAssistant(array $params): object
     // {
     //     return $this->assistant()->create($params);
