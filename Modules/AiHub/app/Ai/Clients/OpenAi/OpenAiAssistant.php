@@ -16,11 +16,11 @@ class OpenAiAssistant implements Assistant
     protected string $defaultModel;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  Client  $client  Instância do cliente OpenAI SDK.
-     * @param  string  $defaultModel  Modelo padrão a ser usado.
-     * @param  string|null  $companySlug  Slug da empresa para contexto.
+     * @param  Client  $client  Instance of the OpenAI SDK client.
+     * @param  string  $defaultModel  Default model to be used.
+     * @param  string|null  $companySlug  Company slug for context.
      */
     public function __construct(Client $client, string $defaultModel, ?string $companySlug = null)
     {
@@ -30,16 +30,16 @@ class OpenAiAssistant implements Assistant
     }
 
     /**
-     * Cria um novo assistente.
+     * Creates a new assistant.
      *
-     * @param  array  $params  Parâmetros para criação do assistente.
-     * @return object Resposta da API com o assistente criado.
+     * @param  array  $params  Parameters for assistant creation.
+     * @return object API response with the created assistant.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function create(array $params): object
     {
-        // Garantir que o modelo esteja definido, usando o padrão se não fornecido
+        // Ensure the model is defined, using the default if not provided
         if (! isset($params['model'])) {
             $params['model'] = $this->defaultModel;
         }
@@ -48,23 +48,23 @@ class OpenAiAssistant implements Assistant
 
         try {
             $assistant = $this->client->assistants()->create($params);
-            Log::info("Assistente OpenAI criado: {$assistant->id}");
+            Log::info("OpenAI Assistant created: {$assistant->id}");
 
             return $assistant;
         } catch (\Exception $e) {
-            Log::error('Erro ao criar assistente OpenAI: '.$e->getMessage());
-            throw new RuntimeException('Falha ao criar assistente OpenAI.', 0, $e);
+            Log::error('Error creating OpenAI assistant: '.$e->getMessage());
+            throw new RuntimeException('Failed to create OpenAI assistant.', 0, $e);
         }
     }
 
     /**
-     * Modifica um assistente existente.
+     * Modifies an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  array  $params  Parâmetros para modificação.
-     * @return object Resposta da API.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  array  $params  Parameters for modification.
+     * @return object API response.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function modify(string $assistantId, array $params): object
     {
@@ -72,98 +72,98 @@ class OpenAiAssistant implements Assistant
 
         try {
             $assistant = $this->client->assistants()->modify($assistantId, $params);
-            Log::info("Assistente OpenAI {$assistantId} modificado.");
+            Log::info("OpenAI Assistant {$assistantId} modified.");
 
             return $assistant;
         } catch (\Exception $e) {
-            Log::error("Erro ao modificar assistente OpenAI {$assistantId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao modificar assistente OpenAI.', 0, $e);
+            Log::error("Error modifying OpenAI assistant {$assistantId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to modify OpenAI assistant.', 0, $e);
         }
     }
 
     /**
-     * Exclui um assistente.
+     * Deletes an assistant.
      *
-     * @param  string  $assistantId  ID do assistente a ser excluído.
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $assistantId  ID of the assistant to be deleted.
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $assistantId): bool
     {
         try {
             $response = $this->client->assistants()->delete($assistantId);
             if ($response->deleted ?? false) {
-                Log::info("Assistente OpenAI {$assistantId} deletado com sucesso.");
+                Log::info("OpenAI Assistant {$assistantId} successfully deleted.");
 
                 return true;
             }
-            Log::warning("Falha ao deletar assistente OpenAI {$assistantId}. Resposta: ".json_encode($response));
+            Log::warning("Failed to delete OpenAI assistant {$assistantId}. Response: ".json_encode($response));
 
             return false;
         } catch (\Exception $e) {
-            Log::error("Erro ao deletar assistente OpenAI {$assistantId}: ".$e->getMessage());
+            Log::error("Error deleting OpenAI assistant {$assistantId}: ".$e->getMessage());
 
             return false;
         }
     }
 
     /**
-     * Adiciona um arquivo a um assistente existente.
+     * Adds a file to an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  string  $fileId  ID do arquivo.
-     * @return object Resposta da API.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  string  $fileId  File ID.
+     * @return object API response.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function addFile(string $assistantId, string $fileId): object
     {
         try {
-            // A API Assistants V2 usa o endpoint files para associar arquivos
+            // The Assistants V2 API uses the files endpoint to associate files
             $response = $this->client->assistants()->files()->create($assistantId, [
                 'file_id' => $fileId,
             ]);
-            Log::info("Arquivo {$fileId} adicionado ao assistente {$assistantId}.");
+            Log::info("File {$fileId} added to assistant {$assistantId}.");
 
             return $response;
         } catch (\Exception $e) {
-            Log::error("Erro ao adicionar arquivo {$fileId} ao assistente {$assistantId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao adicionar arquivo ao assistente OpenAI.', 0, $e);
+            Log::error("Error adding file {$fileId} to assistant {$assistantId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to add file to OpenAI assistant.', 0, $e);
         }
     }
 
     /**
-     * Remove um arquivo de um assistente existente.
+     * Removes a file from an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  string  $fileId  ID do arquivo.
-     * @return bool Retorna true se a remoção for bem-sucedida.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  string  $fileId  File ID.
+     * @return bool Returns true if removal is successful.
      */
     public function removeFile(string $assistantId, string $fileId): bool
     {
         try {
             $response = $this->client->assistants()->files()->delete($assistantId, $fileId);
             if ($response->deleted ?? false) {
-                Log::info("Arquivo {$fileId} removido do assistente {$assistantId}.");
+                Log::info("File {$fileId} removed from assistant {$assistantId}.");
 
                 return true;
             }
-            Log::warning("Falha ao remover arquivo {$fileId} do assistente {$assistantId}. Resposta: ".json_encode($response));
+            Log::warning("Failed to remove file {$fileId} from assistant {$assistantId}. Response: ".json_encode($response));
 
             return false;
         } catch (\Exception $e) {
-            Log::error("Erro ao remover arquivo {$fileId} do assistente {$assistantId}: ".$e->getMessage());
+            Log::error("Error removing file {$fileId} from assistant {$assistantId}: ".$e->getMessage());
 
             return false;
         }
     }
 
     /**
-     * Lista os arquivos associados a um assistente.
+     * Lists the files associated with an assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @return object Resposta da API com a lista de arquivos.
+     * @param  string  $assistantId  Assistant ID.
+     * @return object API response with the list of files.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function listFiles(string $assistantId): object
     {
@@ -172,8 +172,8 @@ class OpenAiAssistant implements Assistant
 
             return $response;
         } catch (\Exception $e) {
-            Log::error("Erro ao listar arquivos do assistente {$assistantId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao listar arquivos do assistente OpenAI.', 0, $e);
+            Log::error("Error listing files for assistant {$assistantId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to list files for OpenAI assistant.', 0, $e);
         }
     }
 
@@ -182,13 +182,13 @@ class OpenAiAssistant implements Assistant
         if (! isset($params['tools'])) {
             $params['tools'] = [['type' => 'file_search']];
         } else {
-            // Atualizar 'retrieval' para 'file_search' se presente
+            // Update 'retrieval' to 'file_search' if present
             foreach ($params['tools'] as &$tool) {
                 if (isset($tool['type']) && $tool['type'] === 'retrieval') {
                     $tool['type'] = 'file_search';
                 }
             }
-            unset($tool); // Quebrar a referência do último elemento
+            unset($tool); // Break the reference to the last element
         }
     }
 }

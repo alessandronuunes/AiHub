@@ -44,18 +44,18 @@ class AiHubServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\AiHub\Console\Ia\Assistant\ListAssistantCommand::class,
-            \Modules\AiHub\Console\Ia\Assistant\CreateChatCommand::class,
-            \Modules\AiHub\Console\Ia\Assistant\DeleteChatCommand::class,
-            \Modules\AiHub\Console\Ia\Assistant\UpdateChatCommand::class,
-            \Modules\AiHub\Console\Ia\VectorStore\CreateVectorCommand::class,
-            \Modules\AiHub\Console\Ia\VectorStore\DeleteVectorCommand::class,
-            \Modules\AiHub\Console\Ia\VectorStore\AttachVectorCommand::class,
-            \Modules\AiHub\Console\Ia\VectorStore\ListVectorCommand::class,
-            \Modules\AiHub\Console\Ia\Thread\CreateThreadCommand::class,
-            \Modules\AiHub\Console\Ia\Thread\SendMessageCommand::class,
-            \Modules\AiHub\Console\Ia\Thread\ListMessagesCommand::class,
-            \Modules\AiHub\Console\Ia\Thread\ListThreadCommand::class,
+            \Modules\AiHub\Console\Ai\Assistant\ListAssistantCommand::class,
+            \Modules\AiHub\Console\Ai\Assistant\CreateChatCommand::class,
+            \Modules\AiHub\Console\Ai\Assistant\DeleteChatCommand::class,
+            \Modules\AiHub\Console\Ai\Assistant\UpdateChatCommand::class,
+            \Modules\AiHub\Console\Ai\VectorStore\CreateVectorCommand::class,
+            \Modules\AiHub\Console\Ai\VectorStore\DeleteVectorCommand::class,
+            \Modules\AiHub\Console\Ai\VectorStore\AttachVectorCommand::class,
+            \Modules\AiHub\Console\Ai\VectorStore\ListVectorCommand::class,
+            \Modules\AiHub\Console\Ai\Thread\CreateThreadCommand::class,
+            \Modules\AiHub\Console\Ai\Thread\SendMessageCommand::class,
+            \Modules\AiHub\Console\Ai\Thread\ListMessagesCommand::class,
+            \Modules\AiHub\Console\Ai\Thread\ListThreadCommand::class,
         ]);
     }
 

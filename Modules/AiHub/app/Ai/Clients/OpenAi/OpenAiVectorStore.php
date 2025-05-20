@@ -14,10 +14,10 @@ class OpenAiVectorStore implements VectorStore
     protected ?string $companySlug;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  Client  $client  Instância do cliente OpenAI SDK.
-     * @param  string|null  $companySlug  Slug da empresa para contexto.
+     * @param  Client  $client  OpenAI SDK client instance.
+     * @param  string|null  $companySlug  Company slug for context.
      */
     public function __construct(Client $client, ?string $companySlug = null)
     {
@@ -26,37 +26,37 @@ class OpenAiVectorStore implements VectorStore
     }
 
     /**
-     * Cria uma nova vector store.
+     * Creates a new vector store.
      *
-     * @param  string  $name  Nome da vector store.
-     * @param  array  $params  Parâmetros adicionais para criação.
-     * @return object Resposta da API com a vector store criada.
+     * @param  string  $name  Name of the vector store.
+     * @param  array  $params  Additional parameters for creation.
+     * @return object API response with the created vector store.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function create(string $name, array $params = []): object
     {
         try {
             $vectorStore = $this->client->vectorStores()->create([
                 'name' => $name,
-                ...$params, // Mescla parâmetros adicionais
+                ...$params, // Merges additional parameters
             ]);
-            Log::info("Vector Store OpenAI criada: {$vectorStore->id}");
+            Log::info("OpenAI Vector Store created: {$vectorStore->id}");
 
             return $vectorStore;
         } catch (\Exception $e) {
-            Log::error('Erro ao criar Vector Store OpenAI: '.$e->getMessage());
-            throw new RuntimeException('Falha ao criar Vector Store OpenAI.', 0, $e);
+            Log::error('Error creating OpenAI Vector Store: '.$e->getMessage());
+            throw new RuntimeException('Failed to create OpenAI Vector Store.', 0, $e);
         }
     }
 
     /**
-     * Recupera uma vector store específica.
+     * Retrieves a specific vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @return object Resposta da API com os detalhes da vector store.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @return object API response with vector store details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function retrieve(string $vectorStoreId): object
     {
@@ -65,18 +65,18 @@ class OpenAiVectorStore implements VectorStore
 
             return $vectorStore;
         } catch (\Exception $e) {
-            Log::error("Erro ao recuperar Vector Store OpenAI {$vectorStoreId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao recuperar Vector Store OpenAI.', 0, $e);
+            Log::error("Error retrieving OpenAI Vector Store {$vectorStoreId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to retrieve OpenAI Vector Store.', 0, $e);
         }
     }
 
     /**
-     * Lista todas as vector stores.
+     * Lists all vector stores.
      *
-     * @param  array  $params  Parâmetros de listagem.
-     * @return object Resposta da API com a lista de vector stores.
+     * @param  array  $params  Listing parameters.
+     * @return object API response with the list of vector stores.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function list(array $params = []): object
     {
@@ -85,55 +85,55 @@ class OpenAiVectorStore implements VectorStore
 
             return $vectorStores;
         } catch (\Exception $e) {
-            Log::error('Erro ao listar Vector Stores OpenAI: '.$e->getMessage());
-            throw new RuntimeException('Falha ao listar Vector Stores OpenAI.', 0, $e);
+            Log::error('Error listing OpenAI Vector Stores: '.$e->getMessage());
+            throw new RuntimeException('Failed to list OpenAI Vector Stores.', 0, $e);
         }
     }
 
     /**
-     * Deleta uma vector store.
+     * Deletes a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store a ser deletada.
-     * @param  bool  $forceDelete  Se true, tenta deletar arquivos associados primeiro (não suportado diretamente pela API, requer lógica manual).
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $vectorStoreId  ID of the vector store to be deleted.
+     * @param  bool  $forceDelete  If true, tries to delete associated files first (not directly supported by the API, requires manual logic).
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $vectorStoreId, bool $forceDelete = false): bool
     {
-        // Nota: A API OpenAI não tem um forceDelete direto que deleta arquivos.
-        // Se forceDelete for true, você precisaria listar e deletar os arquivos manualmente primeiro.
-        // Para simplificar, esta implementação apenas tenta deletar a vector store.
-        // Implementar a lógica de forceDelete manual seria mais complexo e fora do escopo direto da refatoração simples.
+        // Note: The OpenAI API doesn't have a direct forceDelete that deletes files.
+        // If forceDelete is true, you would need to list and delete the files manually first.
+        // To simplify, this implementation only tries to delete the vector store.
+        // Implementing manual forceDelete logic would be more complex and outside the direct scope of simple refactoring.
 
         try {
             $response = $this->client->vectorStores()->delete($vectorStoreId);
             if ($response->deleted ?? false) {
-                Log::info("Vector Store OpenAI {$vectorStoreId} deletada com sucesso.");
+                Log::info("OpenAI Vector Store {$vectorStoreId} successfully deleted.");
 
                 return true;
             }
-            Log::warning("Falha ao deletar Vector Store OpenAI {$vectorStoreId}. Resposta: ".json_encode($response));
+            Log::warning("Failed to delete OpenAI Vector Store {$vectorStoreId}. Response: ".json_encode($response));
 
             return false;
         } catch (\Exception $e) {
-            Log::error("Erro ao deletar Vector Store OpenAI {$vectorStoreId}: ".$e->getMessage());
+            Log::error("Error deleting OpenAI Vector Store {$vectorStoreId}: ".$e->getMessage());
 
             return false;
         }
     }
 
     /**
-     * Adiciona arquivos a uma vector store.
+     * Adds files to a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @param  array  $fileIds  IDs dos arquivos a serem adicionados.
-     * @return object Resposta da API com os detalhes da operação.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @param  array  $fileIds  IDs of files to be added.
+     * @return object API response with operation details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function addFiles(string $vectorStoreId, array $fileIds): object
     {
         try {
-            // A API não suporta batchCreate, então precisamos adicionar um por um
+            // The API doesn't support batchCreate, so we need to add one by one
             $results = [];
 
             foreach ($fileIds as $fileId) {
@@ -153,8 +153,8 @@ class OpenAiVectorStore implements VectorStore
                 'count' => count($results),
             ];
         } catch (\Exception $e) {
-            Log::error("Erro ao adicionar arquivos à Vector Store OpenAI {$vectorStoreId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao adicionar arquivos à Vector Store OpenAI.', 0, $e);
+            Log::error("Error adding files to OpenAI Vector Store {$vectorStoreId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to add files to OpenAI Vector Store.', 0, $e);
         }
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Assistant;
+namespace Modules\AiHub\Console\Ai\Assistant;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -16,27 +16,27 @@ use function Laravel\Prompts\text;
 
 class UpdateChatCommand extends Command
 {
-    protected $signature = 'ai:assistant-update {name? : Nome do assistente a ser atualizado}';
+    protected $signature = 'ai:assistant-update {name? : Name of the assistant to be updated}';
 
-    protected $description = 'Atualiza um assistente OpenAI existente';
+    protected $description = 'Updates an existing OpenAI assistant';
 
     /**
-     * Assistente selecionado para atualização
+     * Selected assistant for update
      */
     protected Assistant $assistant;
 
     /**
-     * Novos dados do assistente
+     * New assistant data
      */
     protected array $updatedData = [];
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -45,33 +45,33 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        info("\n🔄 Assistente de Atualização\n");
+        info("\n🔄 Update Assistant\n");
 
-        // Busca o assistente pelo nome ou lista para seleção
+        // Find the assistant by name or list for selection
         if (! $this->findOrSelectAssistant()) {
             return 1;
         }
 
-        // Configura o aiService para a empresa do assistente selecionado
+        // Configure aiService for the selected assistant's company
         $this->aiService->forCompany($this->assistant->company->slug);
 
-        // Coleta as novas informações
+        // Collect new information
         $this->collectUpdatedInformation();
 
-        // Confirma as alterações
+        // Confirm changes
         if (! $this->confirmChanges()) {
-            outro('Operação cancelada.');
+            outro('Operation cancelled.');
 
             return 0;
         }
 
-        // Executa a atualização
+        // Execute the update
         if ($this->executeAssistantUpdate()) {
-            outro('Operação concluída.');
+            outro('Operation completed.');
 
             return 0;
         }
@@ -80,26 +80,26 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Busca o assistente pelo nome ou permite seleção interativa
+     * Find the assistant by name or allow interactive selection
      *
-     * @return bool true se o assistente foi encontrado, false caso contrário
+     * @return bool true if the assistant was found, false otherwise
      */
     private function findOrSelectAssistant(): bool
     {
         $name = $this->argument('name');
 
-        // Se o nome não foi fornecido, exibe lista para seleção
+        // If no name was provided, display list for selection
         if (! $name) {
             return $this->selectAssistantInteractively();
         }
 
-        // Busca pelo nome fornecido
+        // Search by the provided name
         $this->assistant = Assistant::where('name', $name)->first();
 
         if (! $this->assistant) {
-            error("Assistente '{$name}' não encontrado!");
+            error("Assistant '{$name}' not found!");
 
-            // Oferece a opção de selecionar um assistente da lista
+            // Offer the option to select an assistant from the list
             return $this->askToSelectFromList();
         }
 
@@ -109,13 +109,13 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Pergunta ao usuário se deseja selecionar um assistente da lista
+     * Ask the user if they want to select an assistant from the list
      *
-     * @return bool true se o assistente foi selecionado, false caso contrário
+     * @return bool true if the assistant was selected, false otherwise
      */
     private function askToSelectFromList(): bool
     {
-        if (confirm('Deseja selecionar um assistente da lista?', true)) {
+        if (confirm('Do you want to select an assistant from the list?', true)) {
             return $this->selectAssistantInteractively();
         }
 
@@ -123,31 +123,31 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Permite seleção interativa de um assistente da lista
+     * Allow interactive selection of an assistant from the list
      *
-     * @return bool true se um assistente foi selecionado, false caso contrário
+     * @return bool true if an assistant was selected, false otherwise
      */
     private function selectAssistantInteractively(): bool
     {
-        // Busca todos os assistentes
+        // Get all assistants
         $allAssistants = Assistant::with('company')->get();
 
         if ($allAssistants->isEmpty()) {
-            error('❌ Nenhum assistente encontrado no sistema!');
+            error('❌ No assistants found in the system!');
 
             return false;
         }
 
-        info("📝 Listando todos os assistentes disponíveis:\n");
+        info("📝 Listing all available assistants:\n");
 
-        // Prepara as opções para seleção
+        // Prepare options for selection
         $choices = $allAssistants->mapWithKeys(function ($assistant) {
-            return [$assistant->id => "{$assistant->name} (Empresa: {$assistant->company->name})"];
+            return [$assistant->id => "{$assistant->name} (Company: {$assistant->company->name})"];
         })->toArray();
 
-        // Permite o usuário escolher qual assistente atualizar
+        // Allow the user to choose which assistant to update
         $selectedId = select(
-            label: 'Selecione o assistente que deseja atualizar:',
+            label: 'Select the assistant you want to update:',
             options: $choices
         );
 
@@ -159,71 +159,71 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Exibe os detalhes do assistente encontrado
+     * Display the details of the found assistant
      */
     private function displayAssistantDetails(): void
     {
-        info("📝 Assistente encontrado: {$this->assistant->name}");
-        info("🏢 Empresa: {$this->assistant->company->name}");
+        info("📝 Assistant found: {$this->assistant->name}");
+        info("🏢 Company: {$this->assistant->company->name}");
     }
 
     /**
-     * Coleta as novas informações para atualização do assistente
+     * Collect new information for assistant update
      */
     private function collectUpdatedInformation(): void
     {
-        // Solicita novas informações
+        // Request new information
         $this->updatedData['name'] = text(
-            label: 'Novo nome do assistente (Enter para manter o atual)',
+            label: 'New assistant name (Press Enter to keep current)',
             default: $this->assistant->name,
             required: false
         );
 
         $this->updatedData['instructions'] = text(
-            label: 'Novas instruções (Enter para manter as atuais)',
+            label: 'New instructions (Press Enter to keep current)',
             default: $this->assistant->instructions,
             required: false
         );
     }
 
     /**
-     * Solicita confirmação das alterações
+     * Request confirmation of changes
      *
-     * @return bool true se confirmado, false caso contrário
+     * @return bool true if confirmed, false otherwise
      */
     private function confirmChanges(): bool
     {
-        return confirm('Confirma as alterações?', true);
+        return confirm('Confirm changes?', true);
     }
 
     /**
-     * Executa a atualização do assistente na API e no banco de dados
+     * Execute the assistant update in the API and database
      *
-     * @return bool true se a atualização foi bem-sucedida, false caso contrário
+     * @return bool true if the update was successful, false otherwise
      */
     private function executeAssistantUpdate(): bool
     {
         try {
-            // Atualiza na API OpenAI
+            // Update in OpenAI API
             $this->updateAssistantOnOpenAI();
 
-            // Atualiza no banco de dados local
+            // Update in local database
             $this->updateAssistantInDatabase();
 
             $this->displaySuccessMessage();
 
             return true;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao atualizar assistente: ".$e->getMessage());
+            error("\n❌ Error updating assistant: ".$e->getMessage());
 
             return false;
         }
     }
 
     /**
-     * Atualiza o assistente na API OpenAI
+     * Update the assistant in the OpenAI API
      *
-     * @return object Resposta da API
+     * @return object API Response
      */
     private function updateAssistantOnOpenAI()
     {
@@ -232,12 +232,12 @@ class UpdateChatCommand extends Command
                 'name' => $this->updatedData['name'],
                 'instructions' => $this->updatedData['instructions'],
             ]),
-            message: 'Atualizando assistente...'
+            message: 'Updating assistant...'
         );
     }
 
     /**
-     * Atualiza o assistente no banco de dados local
+     * Update the assistant in the local database
      */
     private function updateAssistantInDatabase(): void
     {
@@ -248,10 +248,10 @@ class UpdateChatCommand extends Command
     }
 
     /**
-     * Exibe mensagem de sucesso após a atualização
+     * Display success message after update
      */
     private function displaySuccessMessage(): void
     {
-        info("\n✅ Assistente atualizado com sucesso!");
+        info("\n✅ Assistant updated successfully!");
     }
 }

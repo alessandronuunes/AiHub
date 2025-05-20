@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Thread;
+namespace Modules\AiHub\Console\Ai\Thread;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -18,34 +18,34 @@ use function Laravel\Prompts\text;
 class SendMessageCommand extends Command
 {
     /**
-     * Assinatura do comando com argumentos e opções flexíveis
+     * Command signature with flexible arguments and options
      */
     protected $signature = 'ai:chat-send
-        {thread_id? : ID do thread}
-        {--message= : Mensagem a ser enviada}
-        {--interactive : Modo interativo com perguntas}';
+        {thread_id? : Thread ID}
+        {--message= : Message to be sent}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Envia uma mensagem para um thread existente';
+    protected $description = 'Send a message to an existing thread';
 
     /**
-     * Thread selecionado
+     * Selected thread
      */
     protected Thread $thread;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Mensagem a ser enviada
+     * Message to be sent
      *
-     * Permitindo null para evitar erro ao inicializar
+     * Allowing null to avoid initialization error
      */
     protected ?string $message = null;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -54,57 +54,57 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        $this->info("\n💬 Assistente de Mensagens\n");
+        $this->info("\n💬 Message Assistant\n");
 
         try {
-            // Seleciona o thread
+            // Select the thread
             if (! $this->selectThread()) {
                 return 1;
             }
 
-            // Obtém a mensagem a ser enviada
+            // Get the message to be sent
             if (! $this->collectMessage()) {
-                outro('Operação cancelada.');
+                outro('Operation cancelled.');
 
                 return 0;
             }
 
-            // Confirma o envio da mensagem
+            // Confirm message sending
             if (! $this->confirmMessageSending()) {
-                outro('Operação cancelada.');
+                outro('Operation cancelled.');
 
                 return 0;
             }
 
-            // Envia a mensagem e processa a resposta
+            // Send the message and process the response
             if (! $this->sendMessageAndProcessResponse()) {
                 return 1;
             }
 
-            // Pergunta se deseja continuar a conversa
+            // Ask if you want to continue the conversation
             if ($this->shouldContinueConversation()) {
-                return $this->handle(); // Reinicia o processo
+                return $this->handle(); // Restart the process
             }
 
-            outro('Conversa finalizada.');
+            outro('Conversation ended.');
 
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao enviar mensagem: ".$e->getMessage());
+            error("\n❌ Error sending message: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Seleciona o thread para enviar mensagem
+     * Select the thread to send a message
      *
-     * @return bool true se um thread foi selecionado com sucesso, false caso contrário
+     * @return bool true if a thread was successfully selected, false otherwise
      */
     private function selectThread(): bool
     {
@@ -118,23 +118,23 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Seleciona o thread interativamente
+     * Select the thread interactively
      *
-     * @return bool true se um thread foi selecionado com sucesso, false caso contrário
+     * @return bool true if a thread was successfully selected, false otherwise
      */
     private function selectThreadInteractively(): bool
     {
-        // Lista threads disponíveis
+        // List available threads
         $threads = $this->getAvailableThreads();
 
         if (empty($threads)) {
-            error('❌ Nenhum thread ativo encontrado!');
+            error('❌ No active threads found!');
 
             return false;
         }
 
         $threadId = select(
-            label: 'Selecione o thread:',
+            label: 'Select the thread:',
             options: $threads
         );
 
@@ -142,9 +142,9 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Recupera os threads disponíveis formatados para seleção
+     * Retrieve available threads formatted for selection
      *
-     * @return array Array associativo de threads disponíveis [thread_id => label]
+     * @return array Associative array of available threads [thread_id => label]
      */
     private function getAvailableThreads(): array
     {
@@ -160,33 +160,33 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Encontra um thread pelo ID
+     * Find a thread by ID
      *
-     * @param  string  $threadId  ID do thread
-     * @return bool true se o thread foi encontrado, false caso contrário
+     * @param  string  $threadId  Thread ID
+     * @return bool true if the thread was found, false otherwise
      */
     private function findThreadById(string $threadId): bool
     {
         $this->thread = spin(
             fn () => Thread::where('thread_id', $threadId)->first(),
-            'Buscando thread...'
+            'Searching for thread...'
         );
 
         if (! $this->thread) {
-            error("❌ Thread não encontrado: {$threadId}");
+            error("❌ Thread not found: {$threadId}");
 
             return false;
         }
 
-        info("📝 Thread selecionado: {$this->thread->thread_id} ({$this->thread->company->name})");
+        info("📝 Thread selected: {$this->thread->thread_id} ({$this->thread->company->name})");
 
         return true;
     }
 
     /**
-     * Coleta a mensagem a ser enviada
+     * Collect the message to be sent
      *
-     * @return bool true se a mensagem foi coletada com sucesso, false caso contrário
+     * @return bool true if the message was successfully collected, false otherwise
      */
     private function collectMessage(): bool
     {
@@ -194,18 +194,18 @@ class SendMessageCommand extends Command
 
         if (! $message) {
             $message = text(
-                label: 'Digite sua mensagem:',
+                label: 'Enter your message:',
                 required: true,
                 validate: fn (string $value) => match (true) {
-                    strlen($value) < 2 => 'A mensagem deve ter pelo menos 2 caracteres',
+                    strlen($value) < 2 => 'The message must have at least 2 characters',
                     default => null
                 }
             );
         }
 
-        // Verifica se a mensagem é válida
+        // Check if the message is valid
         if (! $message || strlen(trim($message)) < 2) {
-            error('❌ Mensagem inválida. A mensagem deve ter pelo menos 2 caracteres.');
+            error('❌ Invalid message. The message must have at least 2 characters.');
 
             return false;
         }
@@ -216,54 +216,54 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Confirma o envio da mensagem se estiver em modo interativo
+     * Confirm message sending if in interactive mode
      *
-     * @return bool true se o envio foi confirmado ou não está em modo interativo, false caso contrário
+     * @return bool true if sending was confirmed or not in interactive mode, false otherwise
      */
     private function confirmMessageSending(): bool
     {
         if ($this->option('interactive')) {
-            return confirm('Deseja enviar esta mensagem?', true);
+            return confirm('Do you want to send this message?', true);
         }
 
         return true;
     }
 
     /**
-     * Envia a mensagem e processa a resposta do assistente
+     * Send the message and process the assistant's response
      *
-     * @return bool true se a mensagem foi enviada e processada com sucesso, false caso contrário
+     * @return bool true if the message was sent and processed successfully, false otherwise
      */
     private function sendMessageAndProcessResponse(): bool
     {
-        // Verifica se a mensagem está definida antes de prosseguir
+        // Check if the message is defined before proceeding
         if (! $this->message) {
-            error('❌ Não há mensagem para enviar.');
+            error('❌ No message to send.');
 
             return false;
         }
 
-        info("\n🔄 Enviando mensagem...");
+        info("\n🔄 Sending message...");
 
-        // Envia a mensagem para a OpenAI
+        // Send the message to OpenAI
         $messageId = $this->sendMessageToOpenAI();
 
-        // Salva a mensagem no banco
+        // Save the message to the database
         $this->saveMessageToDatabase($messageId, 'user', $this->message);
 
-        // Executa o assistente para obter a resposta
+        // Run the assistant to get the response
         $run = $this->runAssistant();
 
-        // Aguarda e recupera a resposta do assistente
+        // Wait for and retrieve the assistant's response
         $response = $this->waitForAssistantResponse($run['run_id']);
 
         if (! $response) {
-            error('❌ Tempo limite excedido ao aguardar resposta do assistente.');
+            error('❌ Timeout waiting for assistant response.');
 
             return false;
         }
 
-        // Salva a resposta do assistente
+        // Save the assistant's response
         $this->saveMessageToDatabase(
             $response['message_id'],
             'assistant',
@@ -281,25 +281,25 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Envia a mensagem para a API da OpenAI
+     * Send the message to the OpenAI API
      *
-     * @return string ID da mensagem enviada
+     * @return string ID of the sent message
      */
     private function sendMessageToOpenAI(): string
     {
         return spin(
             fn () => $this->aiService->thread()->addMessage($this->thread->thread_id, $this->message)->id,
-            'Aguarde...'
+            'Please wait...'
         );
     }
 
     /**
-     * Salva a mensagem no banco de dados
+     * Save the message to the database
      *
-     * @param  string  $messageId  ID da mensagem na API
-     * @param  string  $role  Papel da mensagem (user/assistant)
-     * @param  string  $content  Conteúdo da mensagem
-     * @param  array  $metadata  Metadados adicionais (opcional)
+     * @param  string  $messageId  Message ID in the API
+     * @param  string  $role  Message role (user/assistant)
+     * @param  string  $content  Message content
+     * @param  array  $metadata  Additional metadata (optional)
      */
     private function saveMessageToDatabase(string $messageId, string $role, string $content, ?array $metadata = null): void
     {
@@ -316,9 +316,9 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Executa o assistente para processar a mensagem
+     * Run the assistant to process the message
      *
-     * @return array Dados da execução
+     * @return array Execution data
      */
     private function runAssistant(): array
     {
@@ -334,27 +334,27 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Aguarda e recupera a resposta do assistente
+     * Wait for and retrieve the assistant's response
      *
-     * @param  string  $runId  ID da execução
-     * @return array|false Dados da resposta ou false em caso de timeout
+     * @param  string  $runId  Run ID
+     * @return array|false Response data or false in case of timeout
      */
     private function waitForAssistantResponse(string $runId)
     {
-        info("\n⏳ Aguardando resposta do assistente...");
+        info("\n⏳ Waiting for assistant response...");
 
-        // Aguarda resposta usando o aiService
+        // Wait for response using aiService
         $response = spin(
             fn () => $this->aiService->thread()->waitForResponse($this->thread->thread_id, $runId),
-            'Processando...'
+            'Processing...'
         );
 
-        // Se não houver resposta, retorna false
+        // If there's no response, return false
         if (! $response) {
             return false;
         }
 
-        // Adaptação do formato de retorno para o formato esperado pelas funções que consomem esta resposta
+        // Adaptation of the return format to the format expected by the functions that consume this response
         return [
             'message_id' => $response->id,
             'content' => $response->content[0]->text->value,
@@ -363,26 +363,26 @@ class SendMessageCommand extends Command
     }
 
     /**
-     * Exibe a resposta do assistente
+     * Display the assistant's response
      *
-     * @param  string  $content  Conteúdo da resposta
+     * @param  string  $content  Response content
      */
     private function displayAssistantResponse(string $content): void
     {
-        info("\n✅ Mensagem enviada com sucesso!");
-        info("\n📨 Resposta do assistente:");
+        info("\n✅ Message sent successfully!");
+        info("\n📨 Assistant's response:");
         info($content);
     }
 
     /**
-     * Verifica se deve continuar a conversa
+     * Check if the conversation should continue
      *
-     * @return bool true se deve continuar, false caso contrário
+     * @return bool true if it should continue, false otherwise
      */
     private function shouldContinueConversation(): bool
     {
         if ($this->option('interactive')) {
-            return confirm('Deseja enviar outra mensagem?', true);
+            return confirm('Do you want to send another message?', true);
         }
 
         return false;

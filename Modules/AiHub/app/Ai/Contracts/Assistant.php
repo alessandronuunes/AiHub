@@ -5,53 +5,53 @@ namespace Modules\AiHub\Ai\Contracts;
 interface Assistant
 {
     /**
-     * Cria um novo assistente.
+     * Creates a new assistant.
      *
-     * @param  array  $params  Parâmetros para criação do assistente.
-     * @return object Resposta da API com o assistente criado.
+     * @param  array  $params  Parameters for creating the assistant.
+     * @return object API response with the created assistant.
      */
     public function create(array $params): object;
 
     /**
-     * Modifica um assistente existente.
+     * Modifies an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  array  $params  Parâmetros para modificação.
-     * @return object Resposta da API.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  array  $params  Parameters for modification.
+     * @return object API response.
      */
     public function modify(string $assistantId, array $params): object;
 
     /**
-     * Exclui um assistente.
+     * Deletes an assistant.
      *
-     * @param  string  $assistantId  ID do assistente a ser excluído.
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $assistantId  ID of the assistant to be deleted.
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $assistantId): bool;
 
     /**
-     * Adiciona um arquivo a um assistente existente.
+     * Adds a file to an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  string  $fileId  ID do arquivo.
-     * @return object Resposta da API.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  string  $fileId  File ID.
+     * @return object API response.
      */
     public function addFile(string $assistantId, string $fileId): object;
 
     /**
-     * Remove um arquivo de um assistente existente.
+     * Removes a file from an existing assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @param  string  $fileId  ID do arquivo.
-     * @return bool Retorna true se a remoção for bem-sucedida.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  string  $fileId  File ID.
+     * @return bool Returns true if removal is successful.
      */
     public function removeFile(string $assistantId, string $fileId): bool;
 
     /**
-     * Lista os arquivos associados a um assistente.
+     * Lists files associated with an assistant.
      *
-     * @param  string  $assistantId  ID do assistente.
-     * @return object Resposta da API com a lista de arquivos.
+     * @param  string  $assistantId  Assistant ID.
+     * @return object API response with the list of files.
      */
     public function listFiles(string $assistantId): object;
 }

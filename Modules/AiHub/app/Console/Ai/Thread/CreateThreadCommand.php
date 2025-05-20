@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Thread;
+namespace Modules\AiHub\Console\Ai\Thread;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -17,91 +17,91 @@ use function Laravel\Prompts\spin;
 class CreateThreadCommand extends Command
 {
     /**
-     * Assinatura do comando com argumentos e opções flexíveis
+     * Command signature with flexible arguments and options
      */
     protected $signature = 'ai:chat-start
-        {company? : Slug da empresa}
-        {--interactive : Modo interativo com perguntas}';
+        {company? : Company slug}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Cria um novo thread para conversação com o assistente';
+    protected $description = 'Creates a new thread for conversation with the assistant';
 
     /**
-     * Empresa selecionada
+     * Selected company
      */
     protected Company $company;
 
     /**
-     * Serviço de Thread (agora AiService)
+     * Thread Service (now AiService)
      */
-    protected AiService $aiService; // Propriedade já declarada como AiService
+    protected AiService $aiService; // Property already declared as AiService
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
         parent::__construct();
-        $this->aiService = $aiService; // Injeta a instância de AiService
+        $this->aiService = $aiService; // Injects the AiService instance
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        $this->info("\n🤖 Assistente de Criação de Thread\n");
+        $this->info("\n🤖 Thread Creation Assistant\n");
 
         try {
-            // Inicializa o serviço de Thread - REMOVIDO, agora injetado
-            // $this->initializeThreadService(); // REMOVER esta linha
+            // Initialize Thread service - REMOVED, now injected
+            // $this->initializeThreadService(); // REMOVE this line
 
-            // Seleciona a empresa
+            // Select the company
             if (! $this->selectCompany()) {
                 return 1;
             }
 
-            // Verifica se a empresa possui assistente
+            // Check if the company has an assistant
             if (! $this->validateAssistant()) {
                 return 1;
             }
 
-            // Confirma a criação do thread
+            // Confirm thread creation
             if (! $this->confirmThreadCreation()) {
-                outro('Operação cancelada.');
+                outro('Operation cancelled.');
 
                 return 0;
             }
 
-            // Cria o thread
+            // Create the thread
             if ($this->createThread()) {
-                outro('Operação concluída.');
+                outro('Operation completed.');
 
                 return 0;
             }
 
             return 1;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao criar thread: ".$e->getMessage());
+            error("\n❌ Error creating thread: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Inicializa o serviço de Thread
+     * Initialize the Thread service
      *
      * @return void
      */
-    // REMOVER este método completamente
+    // REMOVE this method completely
     // private function initializeThreadService(): void
     // {
     //     $this->threadService = new ThreadService();
     // }
 
     /**
-     * Seleciona a empresa para criar o thread
+     * Selects the company to create the thread
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompany(): bool
     {
@@ -115,23 +115,23 @@ class CreateThreadCommand extends Command
     }
 
     /**
-     * Seleciona a empresa interativamente
+     * Selects the company interactively
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompanyInteractively(): bool
     {
-        // Lista empresas disponíveis
+        // List available companies
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error('❌ Nenhuma empresa cadastrada!');
+            error('❌ No companies registered!');
 
             return false;
         }
 
         $companySlug = select(
-            label: 'Selecione a empresa:',
+            label: 'Select the company:',
             options: $companies
         );
 
@@ -139,43 +139,43 @@ class CreateThreadCommand extends Command
     }
 
     /**
-     * Encontra a empresa pelo slug
+     * Finds the company by slug
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool true se a empresa foi encontrada, false caso contrário
+     * @param  string  $companySlug  Company slug
+     * @return bool true if the company was found, false otherwise
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
             fn () => Company::where('slug', $companySlug)->first(),
-            'Buscando empresa...'
+            'Searching for company...'
         );
 
         if (! $this->company) {
-            error("❌ Empresa não encontrada: {$companySlug}");
+            error("❌ Company not found: {$companySlug}");
 
             return false;
         }
 
-        info("📝 Empresa selecionada: {$this->company->name}");
+        info("📝 Company selected: {$this->company->name}");
 
         return true;
     }
 
     /**
-     * Verifica se a empresa possui um assistente configurado
+     * Checks if the company has a configured assistant
      *
-     * @return bool true se a empresa possui assistente, false caso contrário
+     * @return bool true if the company has an assistant, false otherwise
      */
     private function validateAssistant(): bool
     {
         $assistant = spin(
             fn () => $this->company->assistants()->first(),
-            'Verificando assistente...'
+            'Checking assistant...'
         );
 
         if (! $assistant) {
-            error("❌ Nenhum assistente encontrado para a empresa {$this->company->name}");
+            error("❌ No assistant found for company {$this->company->name}");
 
             return false;
         }
@@ -184,38 +184,38 @@ class CreateThreadCommand extends Command
     }
 
     /**
-     * Confirma a criação do thread se estiver em modo interativo
+     * Confirms thread creation if in interactive mode
      *
-     * @return bool true se a criação foi confirmada ou não está em modo interativo, false caso contrário
+     * @return bool true if creation was confirmed or not in interactive mode, false otherwise
      */
     private function confirmThreadCreation(): bool
     {
         if ($this->option('interactive')) {
-            return confirm('Deseja criar um novo thread para esta empresa?', true);
+            return confirm('Do you want to create a new thread for this company?', true);
         }
 
         return true;
     }
 
     /**
-     * Cria um novo thread e salva no banco de dados
+     * Creates a new thread and saves it in the database
      *
-     * @return bool true se o thread foi criado com sucesso, false caso contrário
+     * @return bool true if the thread was created successfully, false otherwise
      */
     private function createThread(): bool
     {
-        info("\n🔄 Criando thread...");
+        info("\n🔄 Creating thread...");
 
-        // Usa o serviço AiService injetado para criar o thread
+        // Uses the injected AiService to create the thread
         $threadId = spin(
-            fn () => $this->aiService->thread()->create()->id, // Acessa o serviço de thread através de AiService
-            'Aguarde...'
+            fn () => $this->aiService->thread()->create()->id, // Accesses the thread service through AiService
+            'Please wait...'
         );
 
-        // Recupera o primeiro assistente da empresa
+        // Retrieves the first assistant of the company
         $assistant = $this->company->assistants()->first();
 
-        // Salva no banco
+        // Saves to the database
         $this->saveThreadToDatabase($threadId, $assistant->id);
 
         $this->displaySuccessMessage($threadId);
@@ -224,10 +224,10 @@ class CreateThreadCommand extends Command
     }
 
     /**
-     * Salva o thread no banco de dados
+     * Saves the thread in the database
      *
-     * @param  string  $threadId  ID do thread criado na API
-     * @param  int  $assistantId  ID do assistente no banco local
+     * @param  string  $threadId  ID of the thread created in the API
+     * @param  int  $assistantId  ID of the assistant in the local database
      */
     private function saveThreadToDatabase(string $threadId, int $assistantId): void
     {
@@ -244,13 +244,13 @@ class CreateThreadCommand extends Command
     }
 
     /**
-     * Exibe mensagem de sucesso após a criação do thread
+     * Displays success message after thread creation
      *
-     * @param  string  $threadId  ID do thread criado
+     * @param  string  $threadId  ID of the created thread
      */
     private function displaySuccessMessage(string $threadId): void
     {
-        info("\n✅ Thread criado com sucesso!");
+        info("\n✅ Thread created successfully!");
         info("ID: {$threadId}");
     }
 }

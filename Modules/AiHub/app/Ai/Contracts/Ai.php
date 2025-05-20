@@ -5,27 +5,27 @@ namespace Modules\AiHub\Ai\Contracts;
 interface Ai
 {
     /**
-     * Obtém a instância do serviço de Assistente.
+     * Gets the instance of the Assistant service.
      */
     public function assistant(): Assistant;
 
     /**
-     * Obtém a instância do serviço de Thread.
+     * Gets the instance of the Thread service.
      */
     public function thread(): Thread;
 
     /**
-     * Obtém a instância do serviço de Vector Store.
+     * Gets the instance of the Vector Store service.
      */
     public function vectorStore(): VectorStore;
 
     /**
-     * Obtém a instância do serviço de Arquivo.
+     * Gets the instance of the File service.
      */
     public function file(): File;
 
     /**
-     * Define o slug da empresa para o contexto da requisição.
+     * Sets the company slug for the request context.
      *
      * @return $this
      */

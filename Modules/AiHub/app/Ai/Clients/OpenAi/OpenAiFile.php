@@ -12,9 +12,9 @@ class OpenAiFile implements File
     protected Client $client;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  Client  $client  Instância do cliente OpenAI SDK.
+     * @param  Client  $client  OpenAI SDK client instance.
      */
     public function __construct(Client $client)
     {
@@ -22,25 +22,25 @@ class OpenAiFile implements File
     }
 
     /**
-     * Faz upload de um arquivo para a OpenAI.
+     * Uploads a file to OpenAI.
      *
-     * @param  string  $filePath  Caminho completo do arquivo local.
-     * @param  string  $purpose  O propósito do arquivo (ex: 'assistants', 'fine-tune').
-     * @return object Resposta da API com os detalhes do arquivo uploaded.
+     * @param  string  $filePath  Full path of the local file.
+     * @param  string  $purpose  The purpose of the file (e.g., 'assistants', 'fine-tune').
+     * @return object API response with details of the uploaded file.
      *
-     * @throws RuntimeException Se houver erro na API ou arquivo não encontrado/aberto.
+     * @throws RuntimeException If there is an API error or the file is not found/cannot be opened.
      */
     public function upload(string $filePath, string $purpose): object
     {
         if (! file_exists($filePath)) {
-            throw new RuntimeException("Arquivo não encontrado para upload: {$filePath}");
+            throw new RuntimeException("File not found for upload: {$filePath}");
         }
 
         $fileHandle = null;
         try {
             $fileHandle = fopen($filePath, 'r');
             if (! $fileHandle) {
-                throw new RuntimeException("Não foi possível abrir o arquivo para upload: {$filePath}");
+                throw new RuntimeException("Could not open file for upload: {$filePath}");
             }
 
             $response = $this->client->files()->upload([
@@ -48,12 +48,12 @@ class OpenAiFile implements File
                 'file' => $fileHandle,
             ]);
 
-            Log::info("Arquivo uploaded para OpenAI: {$response->id} ({$response->filename})");
+            Log::info("File uploaded to OpenAI: {$response->id} ({$response->filename})");
 
             return $response;
         } catch (\Exception $e) {
-            Log::error("Erro ao fazer upload do arquivo {$filePath} para OpenAI: ".$e->getMessage());
-            throw new RuntimeException('Falha ao fazer upload do arquivo para OpenAI.', 0, $e);
+            Log::error("Error uploading file {$filePath} to OpenAI: ".$e->getMessage());
+            throw new RuntimeException('Failed to upload file to OpenAI.', 0, $e);
         } finally {
             if (is_resource($fileHandle)) {
                 fclose($fileHandle);
@@ -62,12 +62,12 @@ class OpenAiFile implements File
     }
 
     /**
-     * Recupera informações de um arquivo específico na OpenAI.
+     * Retrieves information about a specific file from OpenAI.
      *
-     * @param  string  $fileId  ID do arquivo na OpenAI.
-     * @return object Resposta da API com os detalhes do arquivo.
+     * @param  string  $fileId  OpenAI file ID.
+     * @return object API response with file details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function retrieve(string $fileId): object
     {
@@ -76,18 +76,18 @@ class OpenAiFile implements File
 
             return $file;
         } catch (\Exception $e) {
-            Log::error("Erro ao recuperar arquivo OpenAI {$fileId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao recuperar arquivo OpenAI.', 0, $e);
+            Log::error("Error retrieving OpenAI file {$fileId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to retrieve OpenAI file.', 0, $e);
         }
     }
 
     /**
-     * Lista todos os arquivos na OpenAI.
+     * Lists all files in OpenAI.
      *
-     * @param  array  $params  Parâmetros de listagem (ex: ['purpose' => 'assistants']).
-     * @return object Resposta da API com a lista de arquivos.
+     * @param  array  $params  Listing parameters (e.g., ['purpose' => 'assistants']).
+     * @return object API response with the list of files.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function list(array $params = []): object
     {
@@ -96,33 +96,33 @@ class OpenAiFile implements File
 
             return $files;
         } catch (\Exception $e) {
-            Log::error('Erro ao listar arquivos OpenAI: '.$e->getMessage());
-            throw new RuntimeException('Falha ao listar arquivos OpenAI.', 0, $e);
+            Log::error('Error listing OpenAI files: '.$e->getMessage());
+            throw new RuntimeException('Failed to list OpenAI files.', 0, $e);
         }
     }
 
     /**
-     * Deleta um arquivo da OpenAI.
+     * Deletes a file from OpenAI.
      *
-     * @param  string  $fileId  ID do arquivo a ser deletado.
-     * @return object Resposta da API indicando o status da exclusão.
+     * @param  string  $fileId  ID of the file to be deleted.
+     * @return object API response indicating the deletion status.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function delete(string $fileId): object
     {
         try {
             $response = $this->client->files()->delete($fileId);
             if ($response->deleted ?? false) {
-                Log::info("Arquivo OpenAI {$fileId} deletado com sucesso.");
+                Log::info("OpenAI file {$fileId} successfully deleted.");
             } else {
-                Log::warning("Falha ao deletar arquivo OpenAI {$fileId}. Resposta: ".json_encode($response));
+                Log::warning("Failed to delete OpenAI file {$fileId}. Response: ".json_encode($response));
             }
 
             return $response;
         } catch (\Exception $e) {
-            Log::error("Erro ao deletar arquivo OpenAI {$fileId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao deletar arquivo OpenAI.', 0, $e);
+            Log::error("Error deleting OpenAI file {$fileId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to delete OpenAI file.', 0, $e);
         }
     }
 }

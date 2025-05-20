@@ -5,76 +5,76 @@ namespace Modules\AiHub\Ai\Contracts;
 interface Thread
 {
     /**
-     * Cria uma nova thread.
+     * Creates a new thread.
      *
-     * @param  array  $params  Parâmetros opcionais para criação da thread.
-     * @return object Resposta da API com a thread criada.
+     * @param  array  $params  Optional parameters for thread creation.
+     * @return object API response with the created thread.
      */
     public function create(array $params = []): object;
 
     /**
-     * Recupera uma thread existente.
+     * Retrieves an existing thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @return object Resposta da API com os detalhes da thread.
+     * @param  string  $threadId  Thread ID.
+     * @return object API response with thread details.
      */
     public function retrieve(string $threadId): object;
 
     /**
-     * Adiciona uma mensagem a uma thread.
+     * Adds a message to a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $content  Conteúdo da mensagem.
-     * @param  string  $role  Papel da mensagem (ex: 'user', 'assistant').
-     * @param  array  $params  Parâmetros adicionais para a mensagem.
-     * @return object Resposta da API com a mensagem criada.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $content  Message content.
+     * @param  string  $role  Message role (e.g., 'user', 'assistant').
+     * @param  array  $params  Additional parameters for the message.
+     * @return object API response with the created message.
      */
     public function addMessage(string $threadId, string $content, string $role = 'user', array $params = []): object;
 
     /**
-     * Lista as mensagens de uma thread.
+     * Lists messages in a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  array  $params  Parâmetros de listagem (limit, order, after, before).
-     * @return object Resposta da API com a lista de mensagens.
+     * @param  string  $threadId  Thread ID.
+     * @param  array  $params  Listing parameters (limit, order, after, before).
+     * @return object API response with the list of messages.
      */
     public function listMessages(string $threadId, array $params = []): object;
 
     /**
-     * Executa o assistente em uma thread.
+     * Runs the assistant on a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $assistantId  ID do assistente.
-     * @param  array  $params  Parâmetros adicionais para a execução.
-     * @return object Resposta da API com os detalhes da execução.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  array  $params  Additional parameters for execution.
+     * @return object API response with execution details.
      */
     public function runAssistant(string $threadId, string $assistantId, array $params = []): object;
 
     /**
-     * Recupera o status de uma execução.
+     * Retrieves the status of a run.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $runId  ID da execução.
-     * @return object Resposta da API com os detalhes da execução.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $runId  Run ID.
+     * @return object API response with run details.
      */
     public function retrieveRun(string $threadId, string $runId): object;
 
     /**
-     * Aguarda a conclusão de uma execução e retorna a última mensagem do assistente.
+     * Waits for the completion of a run and returns the assistant's last message.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $runId  ID da execução.
-     * @param  int  $maxAttempts  Número máximo de tentativas.
-     * @param  int  $delay  Delay entre as tentativas em segundos.
-     * @return object|null Resposta da API com a última mensagem ou null se timeout.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $runId  Run ID.
+     * @param  int  $maxAttempts  Maximum number of attempts.
+     * @param  int  $delay  Delay between attempts in seconds.
+     * @return object|null API response with the last message or null if timeout.
      */
     public function waitForResponse(string $threadId, string $runId, int $maxAttempts = 30, int $delay = 1): ?object;
 
     /**
-     * Deleta uma thread.
+     * Deletes a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $threadId  Thread ID.
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $threadId): bool;
 }

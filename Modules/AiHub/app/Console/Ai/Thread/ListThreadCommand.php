@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Thread;
+namespace Modules\AiHub\Console\Ai\Thread;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -15,23 +15,23 @@ use function Laravel\Prompts\table;
 class ListThreadCommand extends Command
 {
     protected $signature = 'ai:chat-active
-        {company? : Slug da empresa}
-        {--interactive : Modo interativo com perguntas}';
+        {company? : Company slug}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Lista todas as conversas ativas';
+    protected $description = 'List all active conversations';
 
     /**
-     * Empresa selecionada
+     * Selected company
      */
     protected Company $company;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -40,24 +40,24 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
         try {
-            info("\n💬 Listagem de Conversas\n");
+            info("\n💬 Conversation Listing\n");
 
-            // Seleciona a empresa
+            // Select the company
             if (! $this->selectCompany()) {
                 return 1;
             }
 
-            // Lista os threads da empresa
+            // List company threads
             if (! $this->listCompanyThreads()) {
                 return 0;
             }
 
-            // Oferecer opção para visualizar mensagens de um thread específico
+            // Offer option to view messages from a specific thread
             if ($this->option('interactive')) {
                 $this->offerViewMessages();
             }
@@ -65,16 +65,16 @@ class ListThreadCommand extends Command
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar conversas: ".$e->getMessage());
+            error("\n❌ Error listing conversations: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Seleciona a empresa para listar threads
+     * Select the company to list threads
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompany(): bool
     {
@@ -88,22 +88,22 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Seleciona a empresa interativamente
+     * Select the company interactively
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompanyInteractively(): bool
     {
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error('❌ Nenhuma empresa cadastrada!');
+            error('❌ No registered companies!');
 
             return false;
         }
 
         $companySlug = select(
-            label: 'Selecione a empresa:',
+            label: 'Select the company:',
             options: $companies
         );
 
@@ -111,17 +111,17 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Encontra a empresa pelo slug
+     * Find the company by slug
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool true se a empresa foi encontrada, false caso contrário
+     * @param  string  $companySlug  Company slug
+     * @return bool true if the company was found, false otherwise
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = Company::where('slug', $companySlug)->first();
 
         if (! $this->company) {
-            error("❌ Empresa não encontrada: {$companySlug}");
+            error("❌ Company not found: {$companySlug}");
 
             return false;
         }
@@ -130,16 +130,16 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Lista os threads da empresa selecionada
+     * List threads from the selected company
      *
-     * @return bool true se threads foram encontrados, false caso contrário
+     * @return bool true if threads were found, false otherwise
      */
     private function listCompanyThreads(): bool
     {
         $threads = $this->getCompanyThreads();
 
         if ($threads->isEmpty()) {
-            info("ℹ️ Nenhuma conversa encontrada para a empresa {$this->company->name}");
+            info("ℹ️ No conversations found for company {$this->company->name}");
 
             return false;
         }
@@ -150,9 +150,9 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Busca os threads da empresa selecionada
+     * Fetch threads from the selected company
      *
-     * @return \Illuminate\Database\Eloquent\Collection Coleção de threads
+     * @return \Illuminate\Database\Eloquent\Collection Collection of threads
      */
     private function getCompanyThreads()
     {
@@ -162,42 +162,42 @@ class ListThreadCommand extends Command
     }
 
     /**
-     * Exibe os threads em formato de tabela
+     * Display threads in table format
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Coleção de threads
+     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Collection of threads
      */
     private function displayThreadsTable($threads): void
     {
-        // Prepara os dados para a tabela
+        // Prepare data for the table
         $tableData = $this->prepareThreadsTableData($threads);
 
-        // Exibe a tabela
+        // Display the table
         table(
-            ['ID', 'Assistente', 'Criado em', 'Status'],
+            ['ID', 'Assistant', 'Created at', 'Status'],
             $tableData
         );
     }
 
     /**
-     * Prepara os dados dos threads para exibição em tabela
+     * Prepare thread data for table display
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Coleção de threads
-     * @return array Dados formatados para a tabela
+     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Collection of threads
+     * @return array Formatted data for the table
      */
     private function prepareThreadsTableData($threads): array
     {
         return $threads->map(function ($thread) {
             return [
                 'ID' => $thread->thread_id,
-                'Assistente' => $thread->assistant->name,
-                'Criado em' => $thread->created_at->format('d/m/Y H:i'),
+                'Assistant' => $thread->assistant->name,
+                'Created at' => $thread->created_at->format('d/m/Y H:i'),
                 'Status' => $thread->status,
             ];
         })->toArray();
     }
 
     /**
-     * Oferece opção para visualizar mensagens de um thread específico
+     * Offer option to view messages from a specific thread
      */
     private function offerViewMessages(): void
     {
@@ -208,10 +208,10 @@ class ListThreadCommand extends Command
         }
 
         $threadOptions = $threads->pluck('thread_id')->toArray();
-        $threadOptions['cancel'] = 'Cancelar';
+        $threadOptions['cancel'] = 'Cancel';
 
         $selectedThread = select(
-            label: 'Selecione um thread para visualizar mensagens:',
+            label: 'Select a thread to view messages:',
             options: $threadOptions
         );
 

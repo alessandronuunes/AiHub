@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\VectorStore;
+namespace Modules\AiHub\Console\Ai\VectorStore;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -18,46 +18,46 @@ use function Laravel\Prompts\text;
 class CreateVectorCommand extends Command
 {
     /**
-     * Assinatura do comando com argumentos e opções flexíveis
+     * Command signature with flexible arguments and options
      */
     protected $signature = 'ai:knowledge-add
-        {company? : Slug da empresa}
-        {--name= : Nome do vectorStore}
-        {--description= : Descrição do vectorStore}
-        {--interactive : Modo interativo com perguntas}';
+        {company? : Company slug}
+        {--name= : Vector Store name}
+        {--description= : Vector Store description}
+        {--interactive : Interactive mode with questions}';
 
     /**
-     * Descrição do comando
+     * Command description
      */
-    protected $description = 'Cria um novo vectorStore para armazenar documentos';
+    protected $description = 'Creates a new Vector Store for storing documents';
 
     /**
-     * Empresa selecionada
+     * Selected company
      */
     protected Company $company;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Nome da Vector Store
+     * Vector Store name
      */
     protected string $storeName;
 
     /**
-     * Descrição da Vector Store
+     * Vector Store description
      */
     protected string $storeDescription;
 
     /**
-     * Caminhos dos arquivos a processar
+     * Paths of files to process
      */
     protected array $filePaths = [];
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -66,55 +66,55 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        $this->info("\n📚 Assistente de Criação de VectorStore\n");
+        $this->info("\n📚 Vector Store Creation Assistant\n");
 
         try {
-            // Seleciona a empresa
+            // Select the company
             if (! $this->selectCompany()) {
                 return 1;
             }
 
-            // Configura o aiService para a empresa selecionada
+            // Configure aiService for the selected company
             $this->aiService->forCompany($this->company->slug);
 
-            // Coleta as informações da Vector Store
+            // Collect Vector Store information
             if (! $this->collectVectorStoreInfo()) {
                 return 1;
             }
 
-            // Confirma a criação da Vector Store
+            // Confirm Vector Store creation
             if (! $this->confirmVectorStoreCreation()) {
-                outro('Operação cancelada.');
+                outro('Operation cancelled.');
 
                 return 0;
             }
 
-            // Busca arquivos disponíveis
+            // Find available files
             $this->findAvailableFiles();
 
-            // Cria a Vector Store
+            // Create the Vector Store
             if ($this->createVectorStore()) {
-                outro('Operação concluída.');
+                outro('Operation completed.');
 
                 return 0;
             }
 
             return 1;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao criar Vector Store: ".$e->getMessage());
+            error("\n❌ Error creating Vector Store: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Seleciona a empresa para criar a Vector Store
+     * Selects the company for creating the Vector Store
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompany(): bool
     {
@@ -128,23 +128,23 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Seleciona a empresa interativamente
+     * Selects the company interactively
      *
-     * @return bool true se a empresa foi selecionada com sucesso, false caso contrário
+     * @return bool true if the company was successfully selected, false otherwise
      */
     private function selectCompanyInteractively(): bool
     {
-        // Lista empresas disponíveis
+        // List available companies
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error('❌ Nenhuma empresa cadastrada!');
+            error('❌ No companies registered!');
 
             return false;
         }
 
         $companySlug = select(
-            label: 'Selecione a empresa:',
+            label: 'Select the company:',
             options: $companies
         );
 
@@ -152,72 +152,72 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Encontra a empresa pelo slug
+     * Finds the company by slug
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool true se a empresa foi encontrada, false caso contrário
+     * @param  string  $companySlug  Company slug
+     * @return bool true if the company was found, false otherwise
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
             fn () => Company::where('slug', $companySlug)->first(),
-            'Buscando empresa...'
+            'Searching for company...'
         );
 
         if (! $this->company) {
-            error("❌ Empresa não encontrada: {$companySlug}");
+            error("❌ Company not found: {$companySlug}");
 
             return false;
         }
 
-        info("📝 Empresa selecionada: {$this->company->name}");
+        info("📝 Company selected: {$this->company->name}");
 
         return true;
     }
 
     /**
-     * Coleta as informações para criação da Vector Store
+     * Collects information for Vector Store creation
      *
-     * @return bool true se as informações foram coletadas com sucesso, false caso contrário
+     * @return bool true if the information was successfully collected, false otherwise
      */
     private function collectVectorStoreInfo(): bool
     {
-        // Coleta o nome
+        // Collect the name
         if (! $this->collectVectorStoreName()) {
             return false;
         }
 
-        // Coleta a descrição
+        // Collect the description
         $this->collectVectorStoreDescription();
 
         return true;
     }
 
     /**
-     * Coleta o nome da Vector Store
+     * Collects the Vector Store name
      *
-     * @return bool true se o nome foi coletado com sucesso, false caso contrário
+     * @return bool true if the name was successfully collected, false otherwise
      */
     private function collectVectorStoreName(): bool
     {
         $name = $this->option('name');
 
-        // Função de validação do nome
+        // Name validation function
         $validateName = function (string $value) {
             if (strlen($value) < 3) {
-                return 'O nome deve ter pelo menos 3 caracteres';
+                return 'The name must have at least 3 characters';
             }
 
             if (VectorStore::where('company_id', $this->company->id)
                 ->where('name', $value)
                 ->exists()) {
-                return 'Já existe um vectorStore com este nome';
+                return 'A Vector Store with this name already exists';
             }
 
             return null;
         };
 
-        // Se o nome foi fornecido via opção, valida ele primeiro
+        // If the name was provided via option, validate it first
         if ($name) {
             $validationResult = $validateName($name);
             if ($validationResult !== null) {
@@ -227,9 +227,9 @@ class CreateVectorCommand extends Command
             }
             $this->storeName = $name;
         } else {
-            // Se não foi fornecido via opção, solicita interativamente
+            // If not provided via option, request interactively
             $this->storeName = text(
-                label: 'Digite o nome do vectorStore:',
+                label: 'Enter the Vector Store name:',
                 required: true,
                 validate: $validateName
             );
@@ -239,7 +239,7 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Coleta a descrição da Vector Store
+     * Collects the Vector Store description
      */
     private function collectVectorStoreDescription(): void
     {
@@ -247,10 +247,10 @@ class CreateVectorCommand extends Command
 
         if (! $description) {
             $description = text(
-                label: 'Digite uma descrição para o vectorStore:',
+                label: 'Enter a description for the Vector Store:',
                 required: true,
                 validate: fn (string $value) => match (true) {
-                    strlen($value) < 10 => 'A descrição deve ter pelo menos 10 caracteres',
+                    strlen($value) < 10 => 'The description must have at least 10 characters',
                     default => null
                 }
             );
@@ -260,54 +260,54 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Confirma a criação da Vector Store se estiver em modo interativo
+     * Confirms the Vector Store creation if in interactive mode
      *
-     * @return bool true se a criação foi confirmada ou não está em modo interativo, false caso contrário
+     * @return bool true if the creation was confirmed or not in interactive mode, false otherwise
      */
     private function confirmVectorStoreCreation(): bool
     {
         if ($this->option('interactive')) {
             $this->displayVectorStoreSummary();
 
-            return confirm('Deseja criar o vectorStore com estas informações?', true);
+            return confirm('Do you want to create the Vector Store with this information?', true);
         }
 
         return true;
     }
 
     /**
-     * Exibe um resumo das informações da Vector Store
+     * Displays a summary of the Vector Store information
      */
     private function displayVectorStoreSummary(): void
     {
-        info("\nResumo da criação:");
-        info("Empresa: {$this->company->name}");
-        info("Nome: {$this->storeName}");
-        info("Descrição: {$this->storeDescription}");
+        info("\nCreation summary:");
+        info("Company: {$this->company->name}");
+        info("Name: {$this->storeName}");
+        info("Description: {$this->storeDescription}");
     }
 
     /**
-     * Busca arquivos disponíveis para processamento
+     * Finds available files for processing
      */
     private function findAvailableFiles(): void
     {
         $storagePath = storage_path("app/companies/{$this->company->slug}/documents");
-        info("\n🔍 Verificando arquivos em: {$storagePath}");
+        info("\n🔍 Checking files in: {$storagePath}");
 
         $this->filePaths = $this->getSupportedFiles($storagePath);
 
         if (! empty($this->filePaths)) {
             $this->handleFoundFiles();
         } else {
-            info("\n⚠️ Nenhum arquivo suportado encontrado");
+            info("\n⚠️ No supported files found");
         }
     }
 
     /**
-     * Recupera os arquivos com extensões suportadas no diretório
+     * Retrieves files with supported extensions in the directory
      *
-     * @param  string  $storagePath  Caminho para buscar arquivos
-     * @return array Lista de caminhos de arquivos encontrados
+     * @param  string  $storagePath  Path to search for files
+     * @return array List of found file paths
      */
     private function getSupportedFiles(string $storagePath): array
     {
@@ -329,21 +329,21 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Processa os arquivos encontrados
+     * Processes the found files
      */
     private function handleFoundFiles(): void
     {
-        info('✅ Encontrados '.count($this->filePaths).' arquivos suportados');
+        info('✅ Found '.count($this->filePaths).' supported files');
 
-        if (! confirm('❓ Deseja incluir estes arquivos na Vector Store?', true)) {
+        if (! confirm('❓ Do you want to include these files in the Vector Store?', true)) {
             $this->filePaths = [];
         }
     }
 
     /**
-     * Cria a Vector Store
+     * Creates the Vector Store
      *
-     * @return bool true se a Vector Store foi criada com sucesso, false caso contrário
+     * @return bool true if the Vector Store was created successfully, false otherwise
      */
     private function createVectorStore(): bool
     {
@@ -355,30 +355,30 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Cria uma Vector Store com arquivos
+     * Creates a Vector Store with files
      *
-     * @return bool true se a Vector Store foi criada com sucesso, false caso contrário
+     * @return bool true if the Vector Store was created successfully, false otherwise
      */
     private function createVectorStoreWithFiles(): bool
     {
         try {
-            info("\n📚 Criando Vector Store com arquivos...");
-            info("↪ Nome da Vector Store: {$this->storeName}");
-            info('↪ Processando '.count($this->filePaths).' arquivos...');
+            info("\n📚 Creating Vector Store with files...");
+            info("↪ Vector Store name: {$this->storeName}");
+            info('↪ Processing '.count($this->filePaths).' files...');
 
-            // Processa arquivos e cria Vector Store
+            // Process files and create Vector Store
             $uploadedFileIds = [];
 
-            // Upload dos arquivos
+            // Upload files
             foreach ($this->filePaths as $filePath) {
                 $fileResponse = spin(
                     fn () => $this->aiService->file()->upload($filePath, 'assistants'),
-                    'Enviando arquivo: '.basename($filePath)
+                    'Uploading file: '.basename($filePath)
                 );
                 $uploadedFileIds[] = $fileResponse->id;
             }
 
-            // Cria a Vector Store
+            // Create the Vector Store
             $vectorStore = spin(
                 fn () => $this->aiService->vectorStore()->create($this->storeName, [
                     'metadata' => [
@@ -386,42 +386,42 @@ class CreateVectorCommand extends Command
                         'description' => $this->storeDescription,
                     ],
                 ]),
-                'Criando Vector Store...'
+                'Creating Vector Store...'
             );
 
-            // Adiciona os arquivos à Vector Store
+            // Add files to the Vector Store
             if (! empty($uploadedFileIds)) {
                 spin(
                     fn () => $this->aiService->vectorStore()->addFiles($vectorStore->id, $uploadedFileIds),
-                    'Associando arquivos à Vector Store...'
+                    'Associating files to Vector Store...'
                 );
             }
 
-            // Salva no banco de dados
+            // Save to database
             $this->saveVectorStoreToDatabase($vectorStore, count($uploadedFileIds));
 
             $this->displaySuccessMessage($vectorStore);
 
             return true;
         } catch (\Exception $e) {
-            error('❌ Erro ao processar arquivos: '.$e->getMessage());
-            if (! confirm('❓ Deseja continuar criando a Vector Store sem arquivos?', true)) {
+            error('❌ Error processing files: '.$e->getMessage());
+            if (! confirm('❓ Do you want to continue creating the Vector Store without files?', true)) {
                 return false;
             }
 
-            // Se falhou com arquivos, tenta criar sem
+            // If failed with files, try to create without
             return $this->createEmptyVectorStore();
         }
     }
 
     /**
-     * Cria uma Vector Store vazia (sem arquivos)
+     * Creates an empty Vector Store (without files)
      *
-     * @return bool true se a Vector Store foi criada com sucesso, false caso contrário
+     * @return bool true if the Vector Store was created successfully, false otherwise
      */
     private function createEmptyVectorStore(): bool
     {
-        info("\n📚 Criando Vector Store sem arquivos...");
+        info("\n📚 Creating Vector Store without files...");
         $vectorStore = spin(
             fn () => $this->aiService->vectorStore()->create($this->storeName, [
                 'metadata' => [
@@ -429,10 +429,10 @@ class CreateVectorCommand extends Command
                     'description' => $this->storeDescription,
                 ],
             ]),
-            'Criando Vector Store...'
+            'Creating Vector Store...'
         );
 
-        // Salva no banco de dados
+        // Save to database
         $this->saveVectorStoreToDatabase($vectorStore, 0);
 
         $this->displaySuccessMessage($vectorStore);
@@ -441,10 +441,10 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Salva a Vector Store no banco de dados
+     * Saves the Vector Store to the database
      *
-     * @param  object  $vectorStore  Resposta da API
-     * @param  int  $fileCount  Número de arquivos processados
+     * @param  object  $vectorStore  API Response
+     * @param  int  $fileCount  Number of processed files
      */
     private function saveVectorStoreToDatabase($vectorStore, $fileCount): void
     {
@@ -462,19 +462,19 @@ class CreateVectorCommand extends Command
     }
 
     /**
-     * Exibe mensagem de sucesso após a criação da Vector Store
+     * Displays success message after Vector Store creation
      *
-     * @param  object  $vectorStore  Resposta da API com os dados da Vector Store criada
+     * @param  object  $vectorStore  API Response with created Vector Store data
      */
     private function displaySuccessMessage(object $vectorStore): void
     {
-        info("\n✅ Vector Store criada com sucesso!");
+        info("\n✅ Vector Store created successfully!");
         info("ID: {$vectorStore->id}");
-        info("Nome: {$this->storeName}");
+        info("Name: {$this->storeName}");
 
-        // Se tiver arquivos processados, mostra a contagem
+        // If there are processed files, show the count
         if (! empty($this->filePaths)) {
-            info('Arquivos processados: '.count($this->filePaths));
+            info('Processed files: '.count($this->filePaths));
         }
     }
 }

@@ -12,18 +12,18 @@ class AiServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Registra a AiFactory no contêiner de serviços
+        // Register the AiFactory in the service container
         $this->app->singleton(AiFactory::class, function ($app) {
             return new AiFactory;
         });
 
-        // Registra o AiService no contêiner de serviços
-        // Ele receberá a AiFactory automaticamente via injeção de dependência
+        // Register the AiService in the service container
+        // It will receive the AiFactory automatically via dependency injection
         $this->app->singleton(AiService::class, function ($app) {
             return new AiService($app->make(AiFactory::class));
         });
 
-        // Opcional: Você pode criar um alias para facilitar a injeção ou uso via helper
+        // Optional: You can create an alias to facilitate injection or use via helper
         // $this->app->alias(AiService::class, 'ai');
     }
 

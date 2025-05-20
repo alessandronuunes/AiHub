@@ -5,63 +5,63 @@ namespace Modules\AiHub\Ai\Contracts;
 interface VectorStore
 {
     /**
-     * Cria uma nova vector store.
+     * Creates a new vector store.
      *
-     * @param  string  $name  Nome da vector store.
-     * @param  array  $params  Parâmetros adicionais para criação.
-     * @return object Resposta da API com a vector store criada.
+     * @param  string  $name  Vector store name.
+     * @param  array  $params  Additional parameters for creation.
+     * @return object API response with the created vector store.
      */
     public function create(string $name, array $params = []): object;
 
     /**
-     * Recupera uma vector store específica.
+     * Retrieves a specific vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @return object Resposta da API com os detalhes da vector store.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @return object API response with vector store details.
      */
     public function retrieve(string $vectorStoreId): object;
 
     /**
-     * Lista todas as vector stores.
+     * Lists all vector stores.
      *
-     * @param  array  $params  Parâmetros de listagem.
-     * @return object Resposta da API com a lista de vector stores.
+     * @param  array  $params  Listing parameters.
+     * @return object API response with the list of vector stores.
      */
     public function list(array $params = []): object;
 
     /**
-     * Deleta uma vector store.
+     * Deletes a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store a ser deletada.
-     * @param  bool  $forceDelete  Se true, tenta deletar arquivos associados primeiro.
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $vectorStoreId  ID of the vector store to be deleted.
+     * @param  bool  $forceDelete  If true, tries to delete associated files first.
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $vectorStoreId, bool $forceDelete = false): bool;
 
     /**
-     * Adiciona arquivos a uma vector store.
+     * Adds files to a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @param  array  $fileIds  IDs dos arquivos a serem adicionados.
-     * @return object Resposta da API com os detalhes da operação.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @param  array  $fileIds  IDs of files to be added.
+     * @return object API response with operation details.
      */
     public function addFiles(string $vectorStoreId, array $fileIds): object;
 
     /**
-     * Remove arquivos de uma vector store.
+     * Removes files from a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @param  array  $fileIds  IDs dos arquivos a serem removidos.
-     * @return object Resposta da API com os detalhes da operação.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @param  array  $fileIds  IDs of files to be removed.
+     * @return object API response with operation details.
      */
     public function removeFiles(string $vectorStoreId, array $fileIds): object;
 
     /**
-     * Lista os arquivos associados a uma vector store.
+     * Lists files associated with a vector store.
      *
-     * @param  string  $vectorStoreId  ID da vector store.
-     * @param  array  $params  Parâmetros de listagem.
-     * @return object Resposta da API com a lista de arquivos.
+     * @param  string  $vectorStoreId  Vector store ID.
+     * @param  array  $params  Listing parameters.
+     * @return object API response with the list of files.
      */
     public function listFiles(string $vectorStoreId, array $params = []): object;
 }
