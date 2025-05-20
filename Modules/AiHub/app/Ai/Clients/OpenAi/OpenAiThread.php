@@ -7,7 +7,7 @@ use Modules\AiHub\Ai\Contracts\Thread;
 use OpenAI\Client;
 use RuntimeException;
 
-// Para polling
+// For polling
 
 class OpenAiThread implements Thread
 {
@@ -16,10 +16,10 @@ class OpenAiThread implements Thread
     protected ?string $companySlug;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  Client  $client  Instância do cliente OpenAI SDK.
-     * @param  string|null  $companySlug  Slug da empresa para contexto.
+     * @param  Client  $client  OpenAI SDK client instance.
+     * @param  string|null  $companySlug  Company slug for context.
      */
     public function __construct(Client $client, ?string $companySlug = null)
     {
@@ -28,33 +28,33 @@ class OpenAiThread implements Thread
     }
 
     /**
-     * Cria uma nova thread.
+     * Creates a new thread.
      *
-     * @param  array  $params  Parâmetros opcionais para criação da thread.
-     * @return object Resposta da API com a thread criada.
+     * @param  array  $params  Optional parameters for thread creation.
+     * @return object API response with the created thread.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function create(array $params = []): object
     {
         try {
             $thread = $this->client->threads()->create($params);
-            Log::info("Thread OpenAI criada: {$thread->id}");
+            Log::info("OpenAI Thread created: {$thread->id}");
 
             return $thread;
         } catch (\Exception $e) {
-            Log::error('Erro ao criar thread OpenAI: '.$e->getMessage());
-            throw new RuntimeException('Falha ao criar thread OpenAI.', 0, $e);
+            Log::error('Error creating OpenAI thread: '.$e->getMessage());
+            throw new RuntimeException('Failed to create OpenAI thread.', 0, $e);
         }
     }
 
     /**
-     * Recupera uma thread existente.
+     * Retrieves an existing thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @return object Resposta da API com os detalhes da thread.
+     * @param  string  $threadId  Thread ID.
+     * @return object API response with thread details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function retrieve(string $threadId): object
     {
@@ -63,21 +63,21 @@ class OpenAiThread implements Thread
 
             return $thread;
         } catch (\Exception $e) {
-            Log::error("Erro ao recuperar thread OpenAI {$threadId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao recuperar thread OpenAI.', 0, $e);
+            Log::error("Error retrieving OpenAI thread {$threadId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to retrieve OpenAI thread.', 0, $e);
         }
     }
 
     /**
-     * Adiciona uma mensagem a uma thread.
+     * Adds a message to a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $content  Conteúdo da mensagem.
-     * @param  string  $role  Papel da mensagem (ex: 'user', 'assistant').
-     * @param  array  $params  Parâmetros adicionais para a mensagem.
-     * @return object Resposta da API com a mensagem criada.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $content  Message content.
+     * @param  string  $role  Message role (e.g., 'user', 'assistant').
+     * @param  array  $params  Additional parameters for the message.
+     * @return object API response with the created message.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function addMessage(string $threadId, string $content, string $role = 'user', array $params = []): object
     {
@@ -85,25 +85,25 @@ class OpenAiThread implements Thread
             $message = $this->client->threads()->messages()->create($threadId, [
                 'role' => $role,
                 'content' => $content,
-                ...$params, // Mescla parâmetros adicionais
+                ...$params, // Merge additional parameters
             ]);
-            Log::info("Mensagem adicionada à thread {$threadId}. Mensagem ID: {$message->id}");
+            Log::info("Message added to thread {$threadId}. Message ID: {$message->id}");
 
             return $message;
         } catch (\Exception $e) {
-            Log::error("Erro ao adicionar mensagem à thread OpenAI {$threadId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao adicionar mensagem à thread OpenAI.', 0, $e);
+            Log::error("Error adding message to OpenAI thread {$threadId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to add message to OpenAI thread.', 0, $e);
         }
     }
 
     /**
-     * Lista as mensagens de uma thread.
+     * Lists the messages of a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  array  $params  Parâmetros de listagem (limit, order, after, before).
-     * @return object Resposta da API com a lista de mensagens.
+     * @param  string  $threadId  Thread ID.
+     * @param  array  $params  Listing parameters (limit, order, after, before).
+     * @return object API response with the list of messages.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function listMessages(string $threadId, array $params = []): object
     {
@@ -112,45 +112,45 @@ class OpenAiThread implements Thread
 
             return $messages;
         } catch (\Exception $e) {
-            Log::error("Erro ao listar mensagens da thread OpenAI {$threadId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao listar mensagens da thread OpenAI.', 0, $e);
+            Log::error("Error listing messages from OpenAI thread {$threadId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to list messages from OpenAI thread.', 0, $e);
         }
     }
 
     /**
-     * Executa o assistente em uma thread.
+     * Runs the assistant in a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $assistantId  ID do assistente.
-     * @param  array  $params  Parâmetros adicionais para a execução.
-     * @return object Resposta da API com os detalhes da execução.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $assistantId  Assistant ID.
+     * @param  array  $params  Additional parameters for execution.
+     * @return object API response with execution details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function runAssistant(string $threadId, string $assistantId, array $params = []): object
     {
         try {
             $run = $this->client->threads()->runs()->create($threadId, [
                 'assistant_id' => $assistantId,
-                ...$params, // Mescla parâmetros adicionais
+                ...$params, // Merges additional parameters
             ]);
-            Log::info("Execução iniciada na thread {$threadId} com assistente {$assistantId}. Run ID: {$run->id}");
+            Log::info("Execution started in thread {$threadId} with assistant {$assistantId}. Run ID: {$run->id}");
 
             return $run;
         } catch (\Exception $e) {
-            Log::error("Erro ao iniciar execução na thread OpenAI {$threadId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao iniciar execução na thread OpenAI.', 0, $e);
+            Log::error("Error starting execution in OpenAI thread {$threadId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to start execution in OpenAI thread.', 0, $e);
         }
     }
 
     /**
-     * Recupera o status de uma execução.
+     * Retrieves the status of an execution.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $runId  ID da execução.
-     * @return object Resposta da API com os detalhes da execução.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $runId  Run ID.
+     * @return object API response with execution details.
      *
-     * @throws RuntimeException Se houver erro na API.
+     * @throws RuntimeException If there is an API error.
      */
     public function retrieveRun(string $threadId, string $runId): object
     {
@@ -159,21 +159,21 @@ class OpenAiThread implements Thread
 
             return $run;
         } catch (\Exception $e) {
-            Log::error("Erro ao recuperar execução OpenAI {$runId} para thread {$threadId}: ".$e->getMessage());
-            throw new RuntimeException('Falha ao recuperar execução OpenAI.', 0, $e);
+            Log::error("Error retrieving OpenAI execution {$runId} for thread {$threadId}: ".$e->getMessage());
+            throw new RuntimeException('Failed to retrieve OpenAI execution.', 0, $e);
         }
     }
 
     /**
-     * Aguarda a conclusão de uma execução e retorna a última mensagem do assistente.
+     * Waits for the completion of an execution and returns the last message from the assistant.
      *
-     * @param  string  $threadId  ID da thread.
-     * @param  string  $runId  ID da execução.
-     * @param  int  $maxAttempts  Número máximo de tentativas.
-     * @param  int  $delay  Delay entre as tentativas em segundos.
-     * @return object|null Resposta da API com a última mensagem ou null se timeout.
+     * @param  string  $threadId  Thread ID.
+     * @param  string  $runId  Run ID.
+     * @param  int  $maxAttempts  Maximum number of attempts.
+     * @param  int  $delay  Delay between attempts in seconds.
+     * @return object|null API response with the last message or null if timeout.
      *
-     * @throws RuntimeException Se houver erro na API durante o polling.
+     * @throws RuntimeException If there is an API error during polling.
      */
     public function waitForResponse(string $threadId, string $runId, int $maxAttempts = 30, int $delay = 1): ?object
     {
@@ -183,60 +183,60 @@ class OpenAiThread implements Thread
 
             switch ($run->status) {
                 case 'completed':
-                    Log::info("Execução {$runId} concluída.");
-                    // Recupera as mensagens após a conclusão
+                    Log::info("Execution {$runId} completed.");
+                    // Retrieve messages after completion
                     $messages = $this->listMessages($threadId, ['order' => 'desc', 'limit' => 1]);
 
-                    // Retorna a última mensagem, que deve ser a resposta do assistente
+                    // Return the last message, which should be the assistant's response
                     return $messages->data[0] ?? null;
                 case 'queued':
                 case 'in_progress':
                 case 'cancelling':
-                    // Aguarda e tenta novamente
-                    Log::debug("Execução {$runId} em status '{$run->status}'. Tentativa {$attempts}/{$maxAttempts}.");
+                    // Wait and try again
+                    Log::debug("Execution {$runId} in status '{$run->status}'. Attempt {$attempts}/{$maxAttempts}.");
                     sleep($delay);
                     $attempts++;
                     break;
                 case 'requires_action':
-                    Log::warning("Execução {$runId} requer ação (ex: tool_calls). Status: {$run->status}.");
+                    Log::warning("Execution {$runId} requires action (e.g., tool_calls). Status: {$run->status}.");
 
-                    // Dependendo da sua necessidade, você pode querer tratar tool_calls aqui
-                    // Por enquanto, vamos apenas logar e parar o polling ou continuar esperando
-                    // Para este exemplo, vamos parar o polling e retornar null ou o status
-                    return $run; // Retorna o objeto run para que o chamador possa inspecionar
+                    // Depending on your needs, you might want to handle tool_calls here
+                    // For now, we'll just log and stop polling or continue waiting
+                    // For this example, we'll stop polling and return null or the status
+                    return $run; // Returns the run object so the caller can inspect it
                 case 'cancelled':
                 case 'failed':
                 case 'expired':
-                    Log::error("Execução {$runId} falhou ou foi cancelada/expirada. Status: {$run->status}.");
-                    throw new RuntimeException("Execução OpenAI falhou com status: {$run->status}.");
+                    Log::error("Execution {$runId} failed or was cancelled/expired. Status: {$run->status}.");
+                    throw new RuntimeException("OpenAI execution failed with status: {$run->status}.");
             }
         }
 
-        Log::warning("Polling para execução {$runId} atingiu o número máximo de tentativas.");
+        Log::warning("Polling for execution {$runId} reached the maximum number of attempts.");
 
         return null; // Timeout
     }
 
     /**
-     * Deleta uma thread.
+     * Deletes a thread.
      *
-     * @param  string  $threadId  ID da thread.
-     * @return bool Retorna true se a exclusão for bem-sucedida.
+     * @param  string  $threadId  Thread ID.
+     * @return bool Returns true if deletion is successful.
      */
     public function delete(string $threadId): bool
     {
         try {
             $response = $this->client->threads()->delete($threadId);
             if ($response->deleted ?? false) {
-                Log::info("Thread OpenAI {$threadId} deletada com sucesso.");
+                Log::info("OpenAI thread {$threadId} successfully deleted.");
 
                 return true;
             }
-            Log::warning("Falha ao deletar thread OpenAI {$threadId}. Resposta: ".json_encode($response));
+            Log::warning("Failed to delete OpenAI thread {$threadId}. Response: ".json_encode($response));
 
             return false;
         } catch (\Exception $e) {
-            Log::error("Erro ao deletar thread OpenAI {$threadId}: ".$e->getMessage());
+            Log::error("Error deleting OpenAI thread {$threadId}: ".$e->getMessage());
 
             return false;
         }

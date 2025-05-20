@@ -16,7 +16,7 @@ class OpenAi implements Ai
 
     protected ?string $companySlug = null;
 
-    // Instâncias dos serviços específicos
+    // Specific service instances
     protected Assistant $assistantService;
 
     protected Thread $threadService;
@@ -26,14 +26,14 @@ class OpenAi implements Ai
     protected File $fileService;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param  OpenAiClient  $client  Instância do cliente OpenAI SDK.
+     * @param  OpenAiClient  $client  OpenAI SDK client instance.
      */
     public function __construct(OpenAiClient $client)
     {
         $this->client = $client;
-        // Instancia os serviços específicos da OpenAI, passando o cliente SDK
+        // Instantiate specific OpenAI services, passing the SDK client
         $defaultModel = Config::get('aihub.providers.openai.model');
         $this->assistantService = new OpenAiAssistant($this->client, $defaultModel, $this->companySlug);
         $this->threadService = new OpenAiThread($this->client, $this->companySlug);
@@ -42,7 +42,7 @@ class OpenAi implements Ai
     }
 
     /**
-     * Define o slug da empresa para o contexto da requisição.
+     * Sets the company slug for the request context.
      *
      * @return $this
      */
@@ -66,7 +66,7 @@ class OpenAi implements Ai
     }
 
     /**
-     * Obtém a instância do serviço de Assistente.
+     * Gets the Assistant service instance.
      */
     public function assistant(): Assistant
     {
@@ -74,7 +74,7 @@ class OpenAi implements Ai
     }
 
     /**
-     * Obtém a instância do serviço de Thread.
+     * Gets the Thread service instance.
      */
     public function thread(): Thread
     {
@@ -82,7 +82,7 @@ class OpenAi implements Ai
     }
 
     /**
-     * Obtém a instância do serviço de Vector Store.
+     * Gets the Vector Store service instance.
      */
     public function vectorStore(): VectorStore
     {
@@ -90,7 +90,7 @@ class OpenAi implements Ai
     }
 
     /**
-     * Obtém a instância do serviço de Arquivo.
+     * Gets the File service instance.
      */
     public function file(): File
     {
