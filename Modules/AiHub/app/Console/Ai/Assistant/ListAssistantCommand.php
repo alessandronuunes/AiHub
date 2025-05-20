@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Assistant;
+namespace Modules\AiHub\Console\Ai\Assistant;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -15,23 +15,23 @@ use function Laravel\Prompts\table;
 class ListAssistantCommand extends Command
 {
     protected $signature = 'ai:assistant-list
-        {company? : Slug da empresa}
-        {--interactive : Modo interativo com perguntas}';
+        {company? : Company slug}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Lista todos os assistentes disponíveis';
+    protected $description = 'Lists all available assistants';
 
     /**
-     * Empresa selecionada
+     * Selected company
      */
     protected Company $company;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -40,27 +40,27 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
         try {
-            info("\n📋 Listagem de Assistentes\n");
+            info("\n📋 Assistant Listing\n");
 
-            // Seleciona a empresa
+            // Select the company
             if (! $this->selectCompany()) {
                 return 1;
             }
 
-            // Configura o aiService para a empresa selecionada
+            // Configure aiService for the selected company
             $this->aiService->forCompany($this->company->slug);
 
-            // Lista os assistentes da empresa
+            // List the company's assistants
             if (! $this->listCompanyAssistants()) {
                 return 0;
             }
 
-            // Oferece opções adicionais no modo interativo
+            // Offer additional options in interactive mode
             if ($this->option('interactive')) {
                 $this->offerAdditionalOptions();
             }
@@ -68,16 +68,16 @@ class ListAssistantCommand extends Command
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar assistentes: ".$e->getMessage());
+            error("\n❌ Error listing assistants: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Seleciona a empresa a ser usada para listar assistentes
+     * Selects the company to be used for listing assistants
      *
-     * @return bool true se uma empresa foi selecionada, false caso contrário
+     * @return bool true if a company was selected, false otherwise
      */
     private function selectCompany(): bool
     {
@@ -91,22 +91,22 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Seleciona a empresa interativamente
+     * Selects the company interactively
      *
-     * @return bool true se uma empresa foi selecionada, false caso contrário
+     * @return bool true if a company was selected, false otherwise
      */
     private function selectCompanyInteractively(): bool
     {
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error('❌ Nenhuma empresa cadastrada!');
+            error('❌ No companies registered!');
 
             return false;
         }
 
         $companySlug = select(
-            label: 'Selecione a empresa:',
+            label: 'Select the company:',
             options: $companies
         );
 
@@ -114,17 +114,17 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Encontra uma empresa pelo slug
+     * Finds a company by slug
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool true se a empresa foi encontrada, false caso contrário
+     * @param  string  $companySlug  Company slug
+     * @return bool true if the company was found, false otherwise
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = Company::where('slug', $companySlug)->first();
 
         if (! $this->company) {
-            error("❌ Empresa não encontrada: {$companySlug}");
+            error("❌ Company not found: {$companySlug}");
 
             return false;
         }
@@ -133,16 +133,16 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Lista os assistentes da empresa selecionada
+     * Lists the assistants of the selected company
      *
-     * @return bool true se assistentes foram encontrados, false caso contrário
+     * @return bool true if assistants were found, false otherwise
      */
     private function listCompanyAssistants(): bool
     {
         $assistants = $this->getCompanyAssistants();
 
         if ($assistants->isEmpty()) {
-            info("ℹ️ Nenhum assistente encontrado para a empresa {$this->company->name}");
+            info("ℹ️ No assistants found for company {$this->company->name}");
 
             return false;
         }
@@ -153,9 +153,9 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Busca os assistentes da empresa selecionada
+     * Gets the assistants of the selected company
      *
-     * @return \Illuminate\Database\Eloquent\Collection Coleção de assistentes
+     * @return \Illuminate\Database\Eloquent\Collection Collection of assistants
      */
     private function getCompanyAssistants()
     {
@@ -163,27 +163,27 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Exibe os assistentes em formato de tabela
+     * Displays the assistants in table format
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $assistants  Coleção de assistentes
+     * @param  \Illuminate\Database\Eloquent\Collection  $assistants  Collection of assistants
      */
     private function displayAssistantsTable($assistants): void
     {
-        // Prepara os dados para a tabela
+        // Prepare data for the table
         $tableData = $this->prepareAssistantsTableData($assistants);
 
-        // Exibe a tabela
+        // Display the table
         table(
-            ['ID', 'Nome', 'Vector Stores'],
+            ['ID', 'Name', 'Vector Stores'],
             $tableData
         );
     }
 
     /**
-     * Prepara os dados dos assistentes para exibição em tabela
+     * Prepares assistant data for table display
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $assistants  Coleção de assistentes
-     * @return array Dados formatados para a tabela
+     * @param  \Illuminate\Database\Eloquent\Collection  $assistants  Collection of assistants
+     * @return array Formatted data for the table
      */
     private function prepareAssistantsTableData($assistants): array
     {
@@ -192,14 +192,14 @@ class ListAssistantCommand extends Command
 
             return [
                 'ID' => $assistant->assistant_id,
-                'Nome' => $assistant->name,
-                'Vector Stores' => $vectorStores ?: 'Nenhuma',
+                'Name' => $assistant->name,
+                'Vector Stores' => $vectorStores ?: 'None',
             ];
         })->toArray();
     }
 
     /**
-     * Oferece opções adicionais no modo interativo
+     * Offers additional options in interactive mode
      */
     private function offerAdditionalOptions(): void
     {
@@ -210,13 +210,13 @@ class ListAssistantCommand extends Command
         }
 
         $action = select(
-            label: 'O que você deseja fazer?',
+            label: 'What would you like to do?',
             options: [
-                'view_details' => 'Ver detalhes de um assistente',
-                'create_thread' => 'Criar uma nova conversa com um assistente',
-                'create_assistant' => 'Criar um novo assistente',
-                'create_vector' => 'Criar uma nova Vector Store',
-                'exit' => 'Sair',
+                'view_details' => 'View details of an assistant',
+                'create_thread' => 'Create a new conversation with an assistant',
+                'create_assistant' => 'Create a new assistant',
+                'create_vector' => 'Create a new Vector Store',
+                'exit' => 'Exit',
             ]
         );
 
@@ -246,7 +246,7 @@ class ListAssistantCommand extends Command
     }
 
     /**
-     * Exibe detalhes de um assistente selecionado
+     * Displays details of a selected assistant
      */
     private function viewAssistantDetails(): void
     {
@@ -254,7 +254,7 @@ class ListAssistantCommand extends Command
         $assistantChoices = $assistants->pluck('name', 'assistant_id')->toArray();
 
         $assistantId = select(
-            label: 'Selecione o assistente:',
+            label: 'Select the assistant:',
             options: $assistantChoices
         );
 
@@ -263,27 +263,27 @@ class ListAssistantCommand extends Command
             ->first();
 
         if (! $assistant) {
-            error('❌ Assistente não encontrado!');
+            error('❌ Assistant not found!');
 
             return;
         }
 
-        // Busca detalhes atualizados na API
+        // Get updated details from the API
         $assistantDetails = spin(
             fn () => $this->aiService->assistant()->retrieve($assistantId),
-            'Buscando detalhes do assistente...'
+            'Fetching assistant details...'
         );
 
-        info("\nDetalhes do Assistente:");
-        info("Nome: {$assistant->name}");
+        info("\nAssistant Details:");
+        info("Name: {$assistant->name}");
         info("ID: {$assistant->assistant_id}");
-        info("Instruções: {$assistant->instructions}");
-        info("Modelo: {$assistantDetails->model}");
+        info("Instructions: {$assistant->instructions}");
+        info("Model: {$assistantDetails->model}");
 
         $toolsList = collect($assistantDetails->tools)->pluck('type')->join(', ');
-        info("Ferramentas: {$toolsList}");
+        info("Tools: {$toolsList}");
 
         $vectorStores = $assistant->vectorStores->pluck('name')->join(', ');
-        info('Vector Stores: '.($vectorStores ?: 'Nenhuma'));
+        info('Vector Stores: '.($vectorStores ?: 'None'));
     }
 }

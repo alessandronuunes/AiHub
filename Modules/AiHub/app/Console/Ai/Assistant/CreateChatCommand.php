@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Assistant;
+namespace Modules\AiHub\Console\Ai\Assistant;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -16,27 +16,27 @@ use function Laravel\Prompts\text;
 
 class CreateChatCommand extends Command
 {
-    protected $signature = 'ai:assistant-create {name? : Nome do assistente} {instructions? : Instruções para o assistente}';
+    protected $signature = 'ai:assistant-create {name? : Name of the assistant} {instructions? : Instructions for the assistant}';
 
-    protected $description = 'Cria um novo assistente OpenAI';
+    protected $description = 'Creates a new OpenAI assistant';
 
     /**
-     * Companhia associada ao assistente
+     * Company associated with the assistant
      */
     protected Company $company;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * ID da Vector Store (se criada)
+     * Vector Store ID (if created)
      */
     protected ?string $vectorStoreId = null;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -45,32 +45,32 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        info("\n🤖 Assistente de Criação\n");
+        info("\n🤖 Creation Assistant\n");
 
-        // Coleta as informações do assistente
+        // Collect assistant information
         $assistantInfo = $this->collectAssistantInfo();
         $name = $assistantInfo['name'];
         $instructions = $assistantInfo['instructions'];
 
-        $this->info("\n🔍 Iniciando criação do assistente '{$name}'...");
+        $this->info("\n🔍 Starting creation of assistant '{$name}'...");
 
-        // Busca ou cria a empresa
+        // Find or create the company
         $companySlug = strtolower($name);
         if (! $this->findOrCreateCompany($companySlug)) {
             return 1;
         }
 
-        // Configura o aiService para a empresa selecionada
+        // Configure aiService for the selected company
         $this->aiService->forCompany($this->company->slug);
 
-        // Verifica e processa arquivos para Vector Store
+        // Check and process files for Vector Store
         $this->processFilesForVectorStore($companySlug, $name);
 
-        // Cria assistente na OpenAI e salva no banco de dados
+        // Create assistant on OpenAI and save to database
         if ($this->createAssistantOnOpenAI($name, $instructions)) {
             return 0;
         }
@@ -79,31 +79,31 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Coleta as informações do assistente através da CLI
+     * Collects assistant information through the CLI
      *
-     * @return array Informações do assistente
+     * @return array Assistant information
      */
     private function collectAssistantInfo(): array
     {
-        // Verifica se o nome foi fornecido como argumento
+        // Check if the name was provided as an argument
         $nameArg = $this->argument('name');
 
         if (! $nameArg) {
-            info("Por favor, forneça as informações do assistente:\n");
+            info("Please provide the assistant information:\n");
         }
 
         $name = text(
-            label: 'Nome do assistente',
+            label: 'Assistant name',
             required: true,
             default: $nameArg ?? ''
         );
 
         $instructions = text(
-            label: 'Instruções para o assistente',
+            label: 'Instructions for the assistant',
             required: true,
             default: $this->argument('instructions') ?? '',
             validate: fn (string $value) => match (true) {
-                strlen($value) < 10 => 'As instruções devem ter pelo menos 10 caracteres',
+                strlen($value) < 10 => 'Instructions must be at least 10 characters long',
                 default => null
             }
         );
@@ -115,73 +115,73 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Busca ou cria uma empresa para associar ao assistente
+     * Finds or creates a company to associate with the assistant
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @return bool Sucesso da operação
+     * @param  string  $companySlug  Company slug
+     * @return bool Operation success
      */
     private function findOrCreateCompany(string $companySlug): bool
     {
-        $this->line("Verificando empresa com slug: {$companySlug}...");
+        $this->line("Checking company with slug: {$companySlug}...");
         $this->company = Company::where('slug', $companySlug)->first();
 
-        // Se a empresa não existir, pergunta se deseja criar
+        // If the company doesn't exist, ask if you want to create it
         if (! $this->company) {
-            if ($this->confirm("❓ Empresa '{$companySlug}' não encontrada. Deseja criar uma nova empresa?", true)) {
-                $companyName = $this->ask('Digite o nome da empresa:', ucfirst($companySlug));
+            if ($this->confirm("❓ Company '{$companySlug}' not found. Do you want to create a new company?", true)) {
+                $companyName = $this->ask('Enter the company name:', ucfirst($companySlug));
 
-                $this->line('📝 Criando nova empresa...');
+                $this->line('📝 Creating new company...');
                 $this->company = Company::create([
                     'name' => $companyName,
                     'slug' => $companySlug,
                     'active' => true,
                 ]);
 
-                $this->info("✅ Empresa '{$companyName}' criada com sucesso!");
+                $this->info("✅ Company '{$companyName}' created successfully!");
 
                 return true;
             } else {
-                $this->error('❌ Operação cancelada. É necessário ter uma empresa válida para criar um assistente.');
+                $this->error('❌ Operation cancelled. You need a valid company to create an assistant.');
 
                 return false;
             }
         } else {
-            $this->info("✅ Empresa encontrada: {$this->company->name}");
+            $this->info("✅ Company found: {$this->company->name}");
 
             return true;
         }
     }
 
     /**
-     * Busca por arquivos e cria uma Vector Store se necessário
+     * Searches for files and creates a Vector Store if necessary
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @param  string  $assistantName  Nome do assistente
+     * @param  string  $companySlug  Company slug
+     * @param  string  $assistantName  Assistant name
      */
     private function processFilesForVectorStore(string $companySlug, string $assistantName): void
     {
-        // Verifica se existem arquivos para a empresa
+        // Check if there are files for the company
         $storagePath = storage_path("app/companies/{$companySlug}/documents");
-        $this->line("\n🔍 Verificando arquivos em: {$storagePath}");
+        $this->line("\n🔍 Checking files in: {$storagePath}");
 
         $filePaths = $this->findSupportedFiles($storagePath);
 
         if (! empty($filePaths)) {
-            info('✅ Encontrados '.count($filePaths).' arquivos suportados');
+            info('✅ Found '.count($filePaths).' supported files');
 
-            if (confirm('❓ Deseja criar uma Vector Store com estes arquivos?', true)) {
+            if (confirm('❓ Do you want to create a Vector Store with these files?', true)) {
                 $this->createVectorStore($companySlug, $assistantName, $filePaths);
             }
         } else {
-            info('⚠️ Nenhum arquivo suportado encontrado');
+            info('⚠️ No supported files found');
         }
     }
 
     /**
-     * Encontra arquivos com extensões suportadas no diretório especificado
+     * Finds files with supported extensions in the specified directory
      *
-     * @param  string  $storagePath  Caminho para buscar arquivos
-     * @return array Lista de caminhos de arquivos encontrados
+     * @param  string  $storagePath  Path to search for files
+     * @return array List of found file paths
      */
     private function findSupportedFiles(string $storagePath): array
     {
@@ -203,64 +203,64 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Cria uma Vector Store com os arquivos fornecidos
+     * Creates a Vector Store with the provided files
      *
-     * @param  string  $companySlug  Slug da empresa
-     * @param  string  $assistantName  Nome do assistente
-     * @param  array  $filePaths  Lista de caminhos de arquivos
+     * @param  string  $companySlug  Company slug
+     * @param  string  $assistantName  Assistant name
+     * @param  array  $filePaths  List of file paths
      */
     private function createVectorStore(string $companySlug, string $assistantName, array $filePaths): void
     {
         try {
-            info("\n📚 Criando Vector Store...");
+            info("\n📚 Creating Vector Store...");
             $vectorStoreName = "{$assistantName}_vector_store";
 
-            info("↪ Nome da Vector Store: {$vectorStoreName}");
-            info('↪ Processando '.count($filePaths).' arquivos...');
+            info("↪ Vector Store name: {$vectorStoreName}");
+            info('↪ Processing '.count($filePaths).' files...');
 
-            // Upload dos arquivos primeiro
+            // Upload files first
             $uploadedFileIds = [];
             foreach ($filePaths as $filePath) {
                 try {
                     $fileResponse = spin(
                         fn () => $this->aiService->file()->upload($filePath, 'assistants'),
-                        'Enviando arquivo: '.basename($filePath)
+                        'Uploading file: '.basename($filePath)
                     );
                     $uploadedFileIds[] = $fileResponse->id;
                 } catch (\Exception $e) {
-                    error('Erro ao fazer upload do arquivo '.basename($filePath).': '.$e->getMessage());
+                    error('Error uploading file '.basename($filePath).': '.$e->getMessage());
                 }
             }
 
             if (empty($uploadedFileIds)) {
-                error('Nenhum arquivo foi enviado com sucesso. Deseja continuar sem Vector Store?');
+                error('No files were uploaded successfully. Do you want to continue without Vector Store?');
 
                 return;
             }
 
-            // Cria a Vector Store
+            // Create the Vector Store
             $vectorStoreResponse = spin(
                 fn () => $this->aiService->vectorStore()->create($vectorStoreName, [
                     'metadata' => [
                         'company_slug' => $companySlug,
-                        'description' => "Vector Store para o assistente {$assistantName}",
+                        'description' => "Vector Store for assistant {$assistantName}",
                     ],
                 ]),
-                'Criando Vector Store...'
+                'Creating Vector Store...'
             );
 
-            // Adiciona os arquivos à Vector Store
+            // Add files to the Vector Store
             spin(
                 fn () => $this->aiService->vectorStore()->addFiles($vectorStoreResponse->id, $uploadedFileIds),
-                'Associando arquivos à Vector Store...'
+                'Associating files with Vector Store...'
             );
 
-            // Salva a Vector Store no banco de dados
+            // Save the Vector Store in the database
             VectorStore::create([
                 'company_id' => $this->company->id,
                 'vector_store_id' => $vectorStoreResponse->id,
                 'name' => $vectorStoreName,
-                'description' => "Vector Store para o assistente {$assistantName}",
+                'description' => "Vector Store for assistant {$assistantName}",
                 'metadata' => [
                     'company_slug' => $companySlug,
                     'has_files' => true,
@@ -270,37 +270,37 @@ class CreateChatCommand extends Command
 
             $this->vectorStoreId = $vectorStoreResponse->id;
 
-            info("✅ Vector Store criada com sucesso! (ID: {$this->vectorStoreId})");
+            info("✅ Vector Store created successfully! (ID: {$this->vectorStoreId})");
         } catch (\Exception $e) {
-            error('❌ Erro ao criar Vector Store: '.$e->getMessage());
-            if (! confirm('❓ Deseja continuar criando o assistente sem a Vector Store?', true)) {
-                throw $e; // Propaga a exceção para cancelar a operação
+            error('❌ Error creating Vector Store: '.$e->getMessage());
+            if (! confirm('❓ Do you want to continue creating the assistant without the Vector Store?', true)) {
+                throw $e; // Propagate the exception to cancel the operation
             }
         }
     }
 
     /**
-     * Cria o assistente na API da OpenAI e salva no banco local
+     * Creates the assistant in the OpenAI API and saves it in the local database
      *
-     * @param  string  $name  Nome do assistente
-     * @param  string  $instructions  Instruções para o assistente
-     * @return bool Sucesso da operação
+     * @param  string  $name  Assistant name
+     * @param  string  $instructions  Instructions for the assistant
+     * @return bool Operation success
      */
     private function createAssistantOnOpenAI(string $name, string $instructions): bool
     {
         try {
-            $this->line("\n🤖 Criando assistente na OpenAI...");
+            $this->line("\n🤖 Creating assistant in OpenAI...");
 
             $assistantParams = $this->buildAssistantParameters($name, $instructions);
             $response = spin(
                 fn () => $this->aiService->assistant()->create($assistantParams),
-                'Criando assistente...'
+                'Creating assistant...'
             );
 
-            // Salva o assistente no banco de dados
+            // Save the assistant in the database
             $assistant = $this->saveAssistantToDatabase($name, $instructions, $response->id);
 
-            // Relaciona com Vector Store se existir
+            // Associate with Vector Store if it exists
             if ($this->vectorStoreId) {
                 $this->associateVectorStoreWithAssistant($assistant);
             }
@@ -309,18 +309,18 @@ class CreateChatCommand extends Command
 
             return true;
         } catch (\Exception $e) {
-            $this->error("\n❌ Erro ao criar assistente: ".$e->getMessage());
+            $this->error("\n❌ Error creating assistant: ".$e->getMessage());
 
             return false;
         }
     }
 
     /**
-     * Constrói os parâmetros necessários para criação do assistente
+     * Builds the necessary parameters for assistant creation
      *
-     * @param  string  $name  Nome do assistente
-     * @param  string  $instructions  Instruções para o assistente
-     * @return array Parâmetros formatados
+     * @param  string  $name  Assistant name
+     * @param  string  $instructions  Instructions for the assistant
+     * @return array Formatted parameters
      */
     private function buildAssistantParameters(string $name, string $instructions): array
     {
@@ -334,7 +334,7 @@ class CreateChatCommand extends Command
         ];
 
         if ($this->vectorStoreId) {
-            $this->line('↪ Configurando Vector Store...');
+            $this->line('↪ Configuring Vector Store...');
             $assistantParams['tools'][] = ['type' => 'file_search'];
             $assistantParams['tool_resources'] = [
                 'file_search' => [
@@ -347,16 +347,16 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Salva o assistente no banco de dados local
+     * Saves the assistant in the local database
      *
-     * @param  string  $name  Nome do assistente
-     * @param  string  $instructions  Instruções do assistente
-     * @param  string  $assistantId  ID do assistente na OpenAI
-     * @return Assistant Instância do modelo Assistant
+     * @param  string  $name  Assistant name
+     * @param  string  $instructions  Assistant instructions
+     * @param  string  $assistantId  Assistant ID in OpenAI
+     * @return Assistant Instance of the Assistant model
      */
     private function saveAssistantToDatabase(string $name, string $instructions, string $assistantId): Assistant
     {
-        $this->line('↪ Salvando no banco de dados...');
+        $this->line('↪ Saving to database...');
 
         return Assistant::create([
             'company_id' => $this->company->id,
@@ -367,9 +367,9 @@ class CreateChatCommand extends Command
     }
 
     /**
-     * Associa a Vector Store ao assistente no banco de dados
+     * Associates the Vector Store with the assistant in the database
      *
-     * @param  Assistant  $assistant  Instância do modelo Assistant
+     * @param  Assistant  $assistant  Instance of the Assistant model
      */
     private function associateVectorStoreWithAssistant(Assistant $assistant): void
     {
@@ -379,22 +379,22 @@ class CreateChatCommand extends Command
 
         if ($vectorStore) {
             $assistant->vectorStores()->attach($vectorStore->id);
-            $this->line('↪ Vector Store vinculada ao assistente no banco de dados');
+            $this->line('↪ Vector Store linked to the assistant in the database');
         }
     }
 
     /**
-     * Exibe mensagem de sucesso na criação do assistente
+     * Displays success message for assistant creation
      *
-     * @param  string  $name  Nome do assistente
-     * @param  string  $assistantId  ID do assistente na OpenAI
+     * @param  string  $name  Assistant name
+     * @param  string  $assistantId  Assistant ID in OpenAI
      */
     private function displaySuccessMessage(string $name, string $assistantId): void
     {
-        $this->info("\n✅ Assistente '{$name}' criado com sucesso!");
-        $this->line("↪ ID do Assistente: {$assistantId}");
+        $this->info("\n✅ Assistant '{$name}' created successfully!");
+        $this->line("↪ Assistant ID: {$assistantId}");
         if ($this->vectorStoreId) {
-            $this->line("↪ Vector Store associada: {$this->vectorStoreId}");
+            $this->line("↪ Associated Vector Store: {$this->vectorStoreId}");
         }
     }
 }
