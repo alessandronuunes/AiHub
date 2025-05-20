@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AiHub\Console\Ia\Thread;
+namespace Modules\AiHub\Console\Ai\Thread;
 
 use Illuminate\Console\Command;
 use Modules\AiHub\Ai\AiService;
@@ -17,32 +17,32 @@ use function Laravel\Prompts\spin;
 class ListMessagesCommand extends Command
 {
     /**
-     * Assinatura do comando com argumentos e opções flexíveis
+     * Command signature with flexible arguments and options
      */
     protected $signature = 'ai:chat-list
-        {thread_id? : ID do thread}
-        {--limit=10 : Número de mensagens a serem exibidas}
-        {--interactive : Modo interativo com perguntas}';
+        {thread_id? : Thread ID}
+        {--limit=10 : Number of messages to display}
+        {--interactive : Interactive mode with questions}';
 
-    protected $description = 'Lista as mensagens de um thread específico';
+    protected $description = 'List messages from a specific thread';
 
     /**
-     * Thread selecionado
+     * Selected thread
      */
     protected Thread $thread;
 
     /**
-     * Serviço de IA
+     * AI Service
      */
     protected AiService $aiService;
 
     /**
-     * Limite de mensagens a serem exibidas
+     * Limit of messages to be displayed
      */
     protected int $limit;
 
     /**
-     * Construtor para injetar dependências
+     * Constructor to inject dependencies
      */
     public function __construct(AiService $aiService)
     {
@@ -51,42 +51,42 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Ponto de entrada principal do comando
+     * Main entry point of the command
      */
     public function handle()
     {
-        info("\n📋 Histórico de Mensagens\n");
+        info("\n📋 Message History\n");
 
         try {
-            // Define o limite de mensagens
+            // Set the message limit
             $this->setMessageLimit();
 
-            // Seleciona o thread
+            // Select the thread
             if (! $this->selectThread()) {
                 return 1;
             }
 
-            // Recupera e exibe as mensagens
+            // Fetch and display messages
             if (! $this->fetchAndDisplayMessages()) {
                 return 0;
             }
 
-            // Oferece opções adicionais se estiver em modo interativo
+            // Offer additional options if in interactive mode
             $this->offerAdditionalOptions();
 
-            outro('Visualização concluída.');
+            outro('Viewing completed.');
 
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar mensagens: ".$e->getMessage());
+            error("\n❌ Error listing messages: ".$e->getMessage());
 
             return 1;
         }
     }
 
     /**
-     * Define o limite de mensagens a serem exibidas
+     * Set the limit of messages to be displayed
      */
     private function setMessageLimit(): void
     {
@@ -94,9 +94,9 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Seleciona o thread para listar mensagens
+     * Select the thread to list messages
      *
-     * @return bool true se um thread foi selecionado com sucesso, false caso contrário
+     * @return bool true if a thread was successfully selected, false otherwise
      */
     private function selectThread(): bool
     {
@@ -110,23 +110,23 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Seleciona o thread interativamente
+     * Select the thread interactively
      *
-     * @return bool true se um thread foi selecionado com sucesso, false caso contrário
+     * @return bool true if a thread was successfully selected, false otherwise
      */
     private function selectThreadInteractively(): bool
     {
-        // Lista threads disponíveis
+        // List available threads
         $threads = $this->getAvailableThreads();
 
         if (empty($threads)) {
-            error('❌ Nenhum thread ativo encontrado!');
+            error('❌ No active threads found!');
 
             return false;
         }
 
         $threadId = select(
-            label: 'Selecione o thread:',
+            label: 'Select the thread:',
             options: $threads
         );
 
@@ -134,9 +134,9 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Recupera os threads disponíveis formatados para seleção
+     * Retrieve available threads formatted for selection
      *
-     * @return array Array associativo de threads disponíveis [thread_id => label]
+     * @return array Associative array of available threads [thread_id => label]
      */
     private function getAvailableThreads(): array
     {
@@ -147,53 +147,53 @@ class ListMessagesCommand extends Command
                 $messageCount = Message::where('thread_id', $thread->id)->count();
 
                 return [
-                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name}) - {$messageCount} mensagens",
+                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name}) - {$messageCount} messages",
                 ];
             })
             ->toArray();
     }
 
     /**
-     * Encontra um thread pelo ID
+     * Find a thread by ID
      *
-     * @param  string  $threadId  ID do thread
-     * @return bool true se o thread foi encontrado, false caso contrário
+     * @param  string  $threadId  Thread ID
+     * @return bool true if the thread was found, false otherwise
      */
     private function findThreadById(string $threadId): bool
     {
         $this->thread = spin(
             fn () => Thread::where('thread_id', $threadId)->first(),
-            'Buscando thread...'
+            'Searching for thread...'
         );
 
         if (! $this->thread) {
-            error("❌ Thread não encontrado: {$threadId}");
+            error("❌ Thread not found: {$threadId}");
 
             return false;
         }
 
-        info("📝 Thread selecionado: {$this->thread->thread_id} ({$this->thread->company->name})");
+        info("📝 Thread selected: {$this->thread->thread_id} ({$this->thread->company->name})");
 
         return true;
     }
 
     /**
-     * Recupera e exibe as mensagens do thread
+     * Fetch and display thread messages
      *
-     * @return bool true se mensagens foram encontradas e exibidas, false caso contrário
+     * @return bool true if messages were found and displayed, false otherwise
      */
     private function fetchAndDisplayMessages(): bool
     {
-        info("\n🔄 Recuperando mensagens...");
+        info("\n🔄 Retrieving messages...");
 
-        // Usa o aiService ao invés do threadService
+        // Use aiService instead of threadService
         $messages = spin(
             fn () => $this->aiService->thread()->listMessages($this->thread->thread_id, ['limit' => $this->limit]),
-            'Aguarde...'
+            'Please wait...'
         );
 
         if (empty($messages->data)) {
-            info("\n⚠️ Nenhuma mensagem encontrada neste thread.");
+            info("\n⚠️ No messages found in this thread.");
 
             return false;
         }
@@ -204,32 +204,32 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Exibe as mensagens em ordem cronológica
+     * Display messages in chronological order
      *
-     * @param  array  $messages  Array de mensagens
+     * @param  array  $messages  Array of messages
      */
     private function displayMessages(array $messages): void
     {
-        info("\n📨 Histórico de Mensagens:");
+        info("\n📨 Message History:");
         info(str_repeat('-', 50));
 
-        // Ordenando em ordem cronológica (mais antigas primeiro)
+        // Sorting in chronological order (oldest first)
         foreach (array_reverse($messages) as $message) {
             $this->displaySingleMessage($message);
         }
     }
 
     /**
-     * Exibe uma única mensagem formatada
+     * Display a single formatted message
      *
-     * @param  object  $message  Objeto de mensagem
+     * @param  object  $message  Message object
      */
     private function displaySingleMessage(object $message): void
     {
-        $role = $message->role === 'user' ? '👤 Usuário' : '🤖 Assistente';
+        $role = $message->role === 'user' ? '👤 User' : '🤖 Assistant';
         $content = $message->content[0]->text->value;
 
-        // Usando a propriedade correta para timestamp
+        // Using the correct property for timestamp
         $timestamp = now()->format('d/m/Y H:i:s');
 
         info("\n{$role} - {$timestamp}");
@@ -238,12 +238,12 @@ class ListMessagesCommand extends Command
     }
 
     /**
-     * Oferece opções adicionais se estiver em modo interativo
+     * Offer additional options if in interactive mode
      */
     private function offerAdditionalOptions(): void
     {
         if ($this->option('interactive')) {
-            if (confirm('Deseja enviar uma nova mensagem para este thread?', true)) {
+            if (confirm('Do you want to send a new message to this thread?', true)) {
                 $this->call('thread:message', [
                     'thread_id' => $this->thread->thread_id,
                     '--interactive' => true,
