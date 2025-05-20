@@ -18,4 +18,9 @@ class Company extends Model
     {
         return $this->hasMany(Assistant::class);
     }
+
+    public function threads(): HasMany
+    {
+        return $this->hasMany(Thread::class);
+    }
 }
