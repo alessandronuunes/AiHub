@@ -2,28 +2,33 @@
 
 namespace Modules\AiHub\Ai\Clients\OpenAi;
 
-use OpenAI\Client as OpenAiClient;
+use Illuminate\Support\Facades\Config;
 use Modules\AiHub\Ai\Contracts\Ai;
+use Modules\AiHub\Ai\Contracts\Assistant;
 use Modules\AiHub\Ai\Contracts\File;
 use Modules\AiHub\Ai\Contracts\Thread;
-use Modules\AiHub\Ai\Contracts\Assistant;
 use Modules\AiHub\Ai\Contracts\VectorStore;
-use Illuminate\Support\Facades\Config;
+use OpenAI\Client as OpenAiClient;
+
 class OpenAi implements Ai
 {
     protected OpenAiClient $client;
+
     protected ?string $companySlug = null;
 
     // Instâncias dos serviços específicos
     protected Assistant $assistantService;
+
     protected Thread $threadService;
+
     protected VectorStore $vectorStoreService;
+
     protected File $fileService;
 
     /**
      * Construtor.
      *
-     * @param OpenAiClient $client Instância do cliente OpenAI SDK.
+     * @param  OpenAiClient  $client  Instância do cliente OpenAI SDK.
      */
     public function __construct(OpenAiClient $client)
     {
@@ -39,15 +44,14 @@ class OpenAi implements Ai
     /**
      * Define o slug da empresa para o contexto da requisição.
      *
-     * @param string|null $companySlug
      * @return $this
      */
     public function setCompany(?string $companySlug): self
     {
         $this->companySlug = $companySlug;
         if ($this->assistantService instanceof OpenAiAssistant) {
-            $this->assistantService = new OpenAiAssistant($this->client, 
-                Config::get('aihub.providers.openai.model'), 
+            $this->assistantService = new OpenAiAssistant($this->client,
+                Config::get('aihub.providers.openai.model'),
                 $companySlug);
         }
         if ($this->threadService instanceof OpenAiThread) {
@@ -56,14 +60,13 @@ class OpenAi implements Ai
         if ($this->vectorStoreService instanceof OpenAiVectorStore) {
             $this->vectorStoreService = new OpenAiVectorStore($this->client, $companySlug);
         }
+
         // $this->fileService->setCompany($companySlug);
         return $this;
     }
 
     /**
      * Obtém a instância do serviço de Assistente.
-     *
-     * @return Assistant
      */
     public function assistant(): Assistant
     {
@@ -72,8 +75,6 @@ class OpenAi implements Ai
 
     /**
      * Obtém a instância do serviço de Thread.
-     *
-     * @return Thread
      */
     public function thread(): Thread
     {
@@ -82,8 +83,6 @@ class OpenAi implements Ai
 
     /**
      * Obtém a instância do serviço de Vector Store.
-     *
-     * @return VectorStore
      */
     public function vectorStore(): VectorStore
     {
@@ -92,8 +91,6 @@ class OpenAi implements Ai
 
     /**
      * Obtém a instância do serviço de Arquivo.
-     *
-     * @return File
      */
     public function file(): File
     {

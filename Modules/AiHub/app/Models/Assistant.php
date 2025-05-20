@@ -10,7 +10,7 @@ class Assistant extends Model
         'company_id',
         'assistant_id',
         'name',
-        'instructions'
+        'instructions',
     ];
 
     public function company()

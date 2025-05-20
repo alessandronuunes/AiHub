@@ -3,9 +3,15 @@
 namespace Modules\AiHub\Console\Ia\Assistant;
 
 use Illuminate\Console\Command;
-use Modules\AiHub\Models\Assistant;
 use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin};
+use Modules\AiHub\Models\Assistant;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 
 class DeleteChatCommand extends Command
 {
@@ -30,8 +36,6 @@ class DeleteChatCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -50,12 +54,13 @@ class DeleteChatCommand extends Command
         $allAssistants = $this->getAllAssistants();
 
         if ($allAssistants->isEmpty()) {
-            error("❌ Nenhum assistente encontrado no sistema!");
+            error('❌ Nenhum assistente encontrado no sistema!');
+
             return 1;
         }
 
         // Seleciona o assistente a ser deletado
-        if (!$this->selectAssistantToDelete($allAssistants)) {
+        if (! $this->selectAssistantToDelete($allAssistants)) {
             return 0;
         }
 
@@ -63,19 +68,21 @@ class DeleteChatCommand extends Command
         $this->aiService->forCompany($this->assistant->company->slug);
 
         // Processa as Vector Stores associadas
-        if (!$this->handleAssociatedVectorStores()) {
+        if (! $this->handleAssociatedVectorStores()) {
             return 0;
         }
 
         // Confirma a exclusão
-        if (!$this->confirmDeletion()) {
+        if (! $this->confirmDeletion()) {
             outro('Operação cancelada pelo usuário.');
+
             return 0;
         }
 
         // Executa a exclusão
         if ($this->executeAssistantDeletion()) {
             outro('Operação concluída.');
+
             return 0;
         }
 
@@ -95,7 +102,7 @@ class DeleteChatCommand extends Command
     /**
      * Permite ao usuário selecionar um assistente para deletar
      *
-     * @param \Illuminate\Database\Eloquent\Collection $allAssistants Coleção de assistentes
+     * @param  \Illuminate\Database\Eloquent\Collection  $allAssistants  Coleção de assistentes
      * @return bool true se um assistente foi selecionado, false caso contrário
      */
     private function selectAssistantToDelete($allAssistants): bool
@@ -121,15 +128,15 @@ class DeleteChatCommand extends Command
     /**
      * Prepara as opções de assistentes para exibição no seletor
      *
-     * @param \Illuminate\Database\Eloquent\Collection $allAssistants Coleção de assistentes
-     * @param string|null $name Nome do assistente para filtrar (opcional)
+     * @param  \Illuminate\Database\Eloquent\Collection  $allAssistants  Coleção de assistentes
+     * @param  string|null  $name  Nome do assistente para filtrar (opcional)
      * @return array Array de opções para o seletor
      */
     private function prepareAssistantsChoices($allAssistants, ?string $name): array
     {
         if ($name) {
             // Se foi fornecido um nome, busca assistentes com esse nome
-            $matchingAssistants = $allAssistants->filter(function($assistant) use ($name) {
+            $matchingAssistants = $allAssistants->filter(function ($assistant) use ($name) {
                 return stripos($assistant->name, $name) !== false;
             });
 
@@ -156,8 +163,6 @@ class DeleteChatCommand extends Command
 
     /**
      * Exibe os detalhes do assistente selecionado
-     *
-     * @return void
      */
     private function displayAssistantDetails(): void
     {
@@ -181,7 +186,7 @@ class DeleteChatCommand extends Command
             return true;
         }
 
-        info("\n📦 Vector Stores associadas encontradas: " . $vectorStores->count());
+        info("\n📦 Vector Stores associadas encontradas: ".$vectorStores->count());
         foreach ($vectorStores as $vectorStore) {
             info("- {$vectorStore->name} (ID: {$vectorStore->vector_store_id})");
         }
@@ -191,16 +196,18 @@ class DeleteChatCommand extends Command
             options: [
                 'delete_all' => 'Apagar todas as Vector Stores',
                 'keep_all' => 'Manter todas as Vector Stores',
-                'cancel' => 'Cancelar operação'
+                'cancel' => 'Cancelar operação',
             ]
         );
 
         if ($action === 'cancel') {
             info('Operação cancelada pelo usuário.');
+
             return false;
         }
 
         $this->deleteVectorStores = ($action === 'delete_all');
+
         return true;
     }
 
@@ -229,18 +236,18 @@ class DeleteChatCommand extends Command
             $this->deleteAssistantFromDatabase();
 
             $this->displaySuccessMessage();
+
             return true;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao deletar assistente: " . $e->getMessage());
+            error("\n❌ Erro ao deletar assistente: ".$e->getMessage());
+
             return false;
         }
     }
 
     /**
      * Exclui as Vector Stores associadas se solicitado
-     *
-     * @return void
      */
     private function deleteAssociatedVectorStores(): void
     {
@@ -250,7 +257,7 @@ class DeleteChatCommand extends Command
             info("\n🗑️  Removendo Vector Stores associadas...");
             foreach ($vectorStores as $vectorStore) {
                 spin(
-                    fn() => $this->aiService->vectorStore()->delete($vectorStore->vector_store_id, true),
+                    fn () => $this->aiService->vectorStore()->delete($vectorStore->vector_store_id, true),
                     "Removendo Vector Store {$vectorStore->name}..."
                 );
             }
@@ -259,21 +266,17 @@ class DeleteChatCommand extends Command
 
     /**
      * Exclui o assistente na API da OpenAI
-     *
-     * @return void
      */
     private function deleteAssistantFromOpenAI(): void
     {
         spin(
-            fn() => $this->aiService->assistant()->delete($this->assistant->assistant_id),
+            fn () => $this->aiService->assistant()->delete($this->assistant->assistant_id),
             'Removendo assistente...'
         );
     }
 
     /**
      * Exclui o assistente do banco de dados local
-     *
-     * @return void
      */
     private function deleteAssistantFromDatabase(): void
     {
@@ -282,21 +285,19 @@ class DeleteChatCommand extends Command
 
         // Deleta o registro do assistente no banco de dados
         spin(
-            fn() => $this->assistant->delete(),
+            fn () => $this->assistant->delete(),
             'Removendo registros do banco de dados...'
         );
     }
 
     /**
      * Exibe mensagem de sucesso após a exclusão
-     *
-     * @return void
      */
     private function displaySuccessMessage(): void
     {
         info("\n✅ Assistente deletado com sucesso!");
         if ($this->deleteVectorStores) {
-            info("✅ Vector Stores associadas foram removidas.");
+            info('✅ Vector Stores associadas foram removidas.');
         }
     }
 }

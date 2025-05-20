@@ -3,9 +3,16 @@
 namespace Modules\AiHub\Console\Ia\Assistant;
 
 use Illuminate\Console\Command;
-use Modules\AiHub\Models\Assistant;
 use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin, text};
+use Modules\AiHub\Models\Assistant;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\text;
 
 class UpdateChatCommand extends Command
 {
@@ -30,8 +37,6 @@ class UpdateChatCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -47,7 +52,7 @@ class UpdateChatCommand extends Command
         info("\n🔄 Assistente de Atualização\n");
 
         // Busca o assistente pelo nome ou lista para seleção
-        if (!$this->findOrSelectAssistant()) {
+        if (! $this->findOrSelectAssistant()) {
             return 1;
         }
 
@@ -58,14 +63,16 @@ class UpdateChatCommand extends Command
         $this->collectUpdatedInformation();
 
         // Confirma as alterações
-        if (!$this->confirmChanges()) {
+        if (! $this->confirmChanges()) {
             outro('Operação cancelada.');
+
             return 0;
         }
 
         // Executa a atualização
         if ($this->executeAssistantUpdate()) {
             outro('Operação concluída.');
+
             return 0;
         }
 
@@ -82,20 +89,22 @@ class UpdateChatCommand extends Command
         $name = $this->argument('name');
 
         // Se o nome não foi fornecido, exibe lista para seleção
-        if (!$name) {
+        if (! $name) {
             return $this->selectAssistantInteractively();
         }
 
         // Busca pelo nome fornecido
         $this->assistant = Assistant::where('name', $name)->first();
 
-        if (!$this->assistant) {
+        if (! $this->assistant) {
             error("Assistente '{$name}' não encontrado!");
+
             // Oferece a opção de selecionar um assistente da lista
             return $this->askToSelectFromList();
         }
 
         $this->displayAssistantDetails();
+
         return true;
     }
 
@@ -124,7 +133,8 @@ class UpdateChatCommand extends Command
         $allAssistants = Assistant::with('company')->get();
 
         if ($allAssistants->isEmpty()) {
-            error("❌ Nenhum assistente encontrado no sistema!");
+            error('❌ Nenhum assistente encontrado no sistema!');
+
             return false;
         }
 
@@ -144,13 +154,12 @@ class UpdateChatCommand extends Command
         $this->assistant = $allAssistants->firstWhere('id', $selectedId);
 
         $this->displayAssistantDetails();
+
         return true;
     }
 
     /**
      * Exibe os detalhes do assistente encontrado
-     *
-     * @return void
      */
     private function displayAssistantDetails(): void
     {
@@ -160,8 +169,6 @@ class UpdateChatCommand extends Command
 
     /**
      * Coleta as novas informações para atualização do assistente
-     *
-     * @return void
      */
     private function collectUpdatedInformation(): void
     {
@@ -204,9 +211,11 @@ class UpdateChatCommand extends Command
             $this->updateAssistantInDatabase();
 
             $this->displaySuccessMessage();
+
             return true;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao atualizar assistente: " . $e->getMessage());
+            error("\n❌ Erro ao atualizar assistente: ".$e->getMessage());
+
             return false;
         }
     }
@@ -219,7 +228,7 @@ class UpdateChatCommand extends Command
     private function updateAssistantOnOpenAI()
     {
         return spin(
-            callback: fn() => $this->aiService->assistant()->modify($this->assistant->assistant_id, [
+            callback: fn () => $this->aiService->assistant()->modify($this->assistant->assistant_id, [
                 'name' => $this->updatedData['name'],
                 'instructions' => $this->updatedData['instructions'],
             ]),
@@ -229,21 +238,17 @@ class UpdateChatCommand extends Command
 
     /**
      * Atualiza o assistente no banco de dados local
-     *
-     * @return void
      */
     private function updateAssistantInDatabase(): void
     {
         $this->assistant->update([
             'name' => $this->updatedData['name'],
-            'instructions' => $this->updatedData['instructions']
+            'instructions' => $this->updatedData['instructions'],
         ]);
     }
 
     /**
      * Exibe mensagem de sucesso após a atualização
-     *
-     * @return void
      */
     private function displaySuccessMessage(): void
     {

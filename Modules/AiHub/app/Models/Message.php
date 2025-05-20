@@ -12,11 +12,11 @@ class Message extends Model
         'message_id',
         'role',
         'content',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     public function thread(): BelongsTo

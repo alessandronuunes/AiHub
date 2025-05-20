@@ -3,10 +3,17 @@
 namespace Modules\AiHub\Console\Ia\VectorStore;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Company;
 use Modules\AiHub\Models\VectorStore;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin, text};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\text;
 
 class CreateVectorCommand extends Command
 {
@@ -51,8 +58,6 @@ class CreateVectorCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -69,7 +74,7 @@ class CreateVectorCommand extends Command
 
         try {
             // Seleciona a empresa
-            if (!$this->selectCompany()) {
+            if (! $this->selectCompany()) {
                 return 1;
             }
 
@@ -77,13 +82,14 @@ class CreateVectorCommand extends Command
             $this->aiService->forCompany($this->company->slug);
 
             // Coleta as informações da Vector Store
-            if (!$this->collectVectorStoreInfo()) {
+            if (! $this->collectVectorStoreInfo()) {
                 return 1;
             }
 
             // Confirma a criação da Vector Store
-            if (!$this->confirmVectorStoreCreation()) {
+            if (! $this->confirmVectorStoreCreation()) {
                 outro('Operação cancelada.');
+
                 return 0;
             }
 
@@ -93,12 +99,14 @@ class CreateVectorCommand extends Command
             // Cria a Vector Store
             if ($this->createVectorStore()) {
                 outro('Operação concluída.');
+
                 return 0;
             }
 
             return 1;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao criar Vector Store: " . $e->getMessage());
+            error("\n❌ Erro ao criar Vector Store: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -112,7 +120,7 @@ class CreateVectorCommand extends Command
     {
         $companySlug = $this->argument('company');
 
-        if (!$companySlug || $this->option('interactive')) {
+        if (! $companySlug || $this->option('interactive')) {
             return $this->selectCompanyInteractively();
         }
 
@@ -130,7 +138,8 @@ class CreateVectorCommand extends Command
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error("❌ Nenhuma empresa cadastrada!");
+            error('❌ Nenhuma empresa cadastrada!');
+
             return false;
         }
 
@@ -145,22 +154,24 @@ class CreateVectorCommand extends Command
     /**
      * Encontra a empresa pelo slug
      *
-     * @param string $companySlug Slug da empresa
+     * @param  string  $companySlug  Slug da empresa
      * @return bool true se a empresa foi encontrada, false caso contrário
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
-            fn() => Company::where('slug', $companySlug)->first(),
+            fn () => Company::where('slug', $companySlug)->first(),
             'Buscando empresa...'
         );
 
-        if (!$this->company) {
+        if (! $this->company) {
             error("❌ Empresa não encontrada: {$companySlug}");
+
             return false;
         }
 
         info("📝 Empresa selecionada: {$this->company->name}");
+
         return true;
     }
 
@@ -172,7 +183,7 @@ class CreateVectorCommand extends Command
     private function collectVectorStoreInfo(): bool
     {
         // Coleta o nome
-        if (!$this->collectVectorStoreName()) {
+        if (! $this->collectVectorStoreName()) {
             return false;
         }
 
@@ -192,7 +203,7 @@ class CreateVectorCommand extends Command
         $name = $this->option('name');
 
         // Função de validação do nome
-        $validateName = function(string $value) {
+        $validateName = function (string $value) {
             if (strlen($value) < 3) {
                 return 'O nome deve ter pelo menos 3 caracteres';
             }
@@ -211,6 +222,7 @@ class CreateVectorCommand extends Command
             $validationResult = $validateName($name);
             if ($validationResult !== null) {
                 error("❌ {$validationResult}");
+
                 return false;
             }
             $this->storeName = $name;
@@ -228,14 +240,12 @@ class CreateVectorCommand extends Command
 
     /**
      * Coleta a descrição da Vector Store
-     *
-     * @return void
      */
     private function collectVectorStoreDescription(): void
     {
         $description = $this->option('description');
 
-        if (!$description) {
+        if (! $description) {
             $description = text(
                 label: 'Digite uma descrição para o vectorStore:',
                 required: true,
@@ -258,6 +268,7 @@ class CreateVectorCommand extends Command
     {
         if ($this->option('interactive')) {
             $this->displayVectorStoreSummary();
+
             return confirm('Deseja criar o vectorStore com estas informações?', true);
         }
 
@@ -266,8 +277,6 @@ class CreateVectorCommand extends Command
 
     /**
      * Exibe um resumo das informações da Vector Store
-     *
-     * @return void
      */
     private function displayVectorStoreSummary(): void
     {
@@ -279,8 +288,6 @@ class CreateVectorCommand extends Command
 
     /**
      * Busca arquivos disponíveis para processamento
-     *
-     * @return void
      */
     private function findAvailableFiles(): void
     {
@@ -289,7 +296,7 @@ class CreateVectorCommand extends Command
 
         $this->filePaths = $this->getSupportedFiles($storagePath);
 
-        if (!empty($this->filePaths)) {
+        if (! empty($this->filePaths)) {
             $this->handleFoundFiles();
         } else {
             info("\n⚠️ Nenhum arquivo suportado encontrado");
@@ -299,7 +306,7 @@ class CreateVectorCommand extends Command
     /**
      * Recupera os arquivos com extensões suportadas no diretório
      *
-     * @param string $storagePath Caminho para buscar arquivos
+     * @param  string  $storagePath  Caminho para buscar arquivos
      * @return array Lista de caminhos de arquivos encontrados
      */
     private function getSupportedFiles(string $storagePath): array
@@ -323,14 +330,12 @@ class CreateVectorCommand extends Command
 
     /**
      * Processa os arquivos encontrados
-     *
-     * @return void
      */
     private function handleFoundFiles(): void
     {
-        info("✅ Encontrados " . count($this->filePaths) . " arquivos suportados");
+        info('✅ Encontrados '.count($this->filePaths).' arquivos suportados');
 
-        if (!confirm("❓ Deseja incluir estes arquivos na Vector Store?", true)) {
+        if (! confirm('❓ Deseja incluir estes arquivos na Vector Store?', true)) {
             $this->filePaths = [];
         }
     }
@@ -342,7 +347,7 @@ class CreateVectorCommand extends Command
      */
     private function createVectorStore(): bool
     {
-        if (!empty($this->filePaths)) {
+        if (! empty($this->filePaths)) {
             return $this->createVectorStoreWithFiles();
         } else {
             return $this->createEmptyVectorStore();
@@ -359,7 +364,7 @@ class CreateVectorCommand extends Command
         try {
             info("\n📚 Criando Vector Store com arquivos...");
             info("↪ Nome da Vector Store: {$this->storeName}");
-            info("↪ Processando " . count($this->filePaths) . " arquivos...");
+            info('↪ Processando '.count($this->filePaths).' arquivos...');
 
             // Processa arquivos e cria Vector Store
             $uploadedFileIds = [];
@@ -367,27 +372,27 @@ class CreateVectorCommand extends Command
             // Upload dos arquivos
             foreach ($this->filePaths as $filePath) {
                 $fileResponse = spin(
-                    fn() => $this->aiService->file()->upload($filePath, 'assistants'),
-                    "Enviando arquivo: " . basename($filePath)
+                    fn () => $this->aiService->file()->upload($filePath, 'assistants'),
+                    'Enviando arquivo: '.basename($filePath)
                 );
                 $uploadedFileIds[] = $fileResponse->id;
             }
 
             // Cria a Vector Store
             $vectorStore = spin(
-                fn() => $this->aiService->vectorStore()->create($this->storeName, [
+                fn () => $this->aiService->vectorStore()->create($this->storeName, [
                     'metadata' => [
                         'company_slug' => $this->company->slug,
-                        'description' => $this->storeDescription
-                    ]
+                        'description' => $this->storeDescription,
+                    ],
                 ]),
                 'Criando Vector Store...'
             );
 
             // Adiciona os arquivos à Vector Store
-            if (!empty($uploadedFileIds)) {
+            if (! empty($uploadedFileIds)) {
                 spin(
-                    fn() => $this->aiService->vectorStore()->addFiles($vectorStore->id, $uploadedFileIds),
+                    fn () => $this->aiService->vectorStore()->addFiles($vectorStore->id, $uploadedFileIds),
                     'Associando arquivos à Vector Store...'
                 );
             }
@@ -396,10 +401,11 @@ class CreateVectorCommand extends Command
             $this->saveVectorStoreToDatabase($vectorStore, count($uploadedFileIds));
 
             $this->displaySuccessMessage($vectorStore);
+
             return true;
         } catch (\Exception $e) {
-            error("❌ Erro ao processar arquivos: " . $e->getMessage());
-            if (!confirm("❓ Deseja continuar criando a Vector Store sem arquivos?", true)) {
+            error('❌ Erro ao processar arquivos: '.$e->getMessage());
+            if (! confirm('❓ Deseja continuar criando a Vector Store sem arquivos?', true)) {
                 return false;
             }
 
@@ -417,11 +423,11 @@ class CreateVectorCommand extends Command
     {
         info("\n📚 Criando Vector Store sem arquivos...");
         $vectorStore = spin(
-            fn() => $this->aiService->vectorStore()->create($this->storeName, [
+            fn () => $this->aiService->vectorStore()->create($this->storeName, [
                 'metadata' => [
                     'company_slug' => $this->company->slug,
-                    'description' => $this->storeDescription
-                ]
+                    'description' => $this->storeDescription,
+                ],
             ]),
             'Criando Vector Store...'
         );
@@ -430,15 +436,15 @@ class CreateVectorCommand extends Command
         $this->saveVectorStoreToDatabase($vectorStore, 0);
 
         $this->displaySuccessMessage($vectorStore);
+
         return true;
     }
 
     /**
      * Salva a Vector Store no banco de dados
      *
-     * @param object $vectorStore Resposta da API
-     * @param int $fileCount Número de arquivos processados
-     * @return void
+     * @param  object  $vectorStore  Resposta da API
+     * @param  int  $fileCount  Número de arquivos processados
      */
     private function saveVectorStoreToDatabase($vectorStore, $fileCount): void
     {
@@ -450,16 +456,15 @@ class CreateVectorCommand extends Command
             'metadata' => [
                 'company_slug' => $this->company->slug,
                 'has_files' => $fileCount > 0,
-                'file_count' => $fileCount
-            ]
+                'file_count' => $fileCount,
+            ],
         ]);
     }
 
     /**
      * Exibe mensagem de sucesso após a criação da Vector Store
      *
-     * @param object $vectorStore Resposta da API com os dados da Vector Store criada
-     * @return void
+     * @param  object  $vectorStore  Resposta da API com os dados da Vector Store criada
      */
     private function displaySuccessMessage(object $vectorStore): void
     {
@@ -468,8 +473,8 @@ class CreateVectorCommand extends Command
         info("Nome: {$this->storeName}");
 
         // Se tiver arquivos processados, mostra a contagem
-        if (!empty($this->filePaths)) {
-            info("Arquivos processados: " . count($this->filePaths));
+        if (! empty($this->filePaths)) {
+            info('Arquivos processados: '.count($this->filePaths));
         }
     }
 }

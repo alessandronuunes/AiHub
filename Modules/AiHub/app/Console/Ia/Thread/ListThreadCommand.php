@@ -3,10 +3,14 @@
 namespace Modules\AiHub\Console\Ia\Thread;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Company;
 use Modules\AiHub\Models\Thread;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{error, info, select, table};
+
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\table;
 
 class ListThreadCommand extends Command
 {
@@ -28,8 +32,6 @@ class ListThreadCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -46,12 +48,12 @@ class ListThreadCommand extends Command
             info("\n💬 Listagem de Conversas\n");
 
             // Seleciona a empresa
-            if (!$this->selectCompany()) {
+            if (! $this->selectCompany()) {
                 return 1;
             }
 
             // Lista os threads da empresa
-            if (!$this->listCompanyThreads()) {
+            if (! $this->listCompanyThreads()) {
                 return 0;
             }
 
@@ -63,7 +65,8 @@ class ListThreadCommand extends Command
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar conversas: " . $e->getMessage());
+            error("\n❌ Erro ao listar conversas: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -77,7 +80,7 @@ class ListThreadCommand extends Command
     {
         $companySlug = $this->argument('company');
 
-        if (!$companySlug || $this->option('interactive')) {
+        if (! $companySlug || $this->option('interactive')) {
             return $this->selectCompanyInteractively();
         }
 
@@ -94,7 +97,8 @@ class ListThreadCommand extends Command
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error("❌ Nenhuma empresa cadastrada!");
+            error('❌ Nenhuma empresa cadastrada!');
+
             return false;
         }
 
@@ -109,15 +113,16 @@ class ListThreadCommand extends Command
     /**
      * Encontra a empresa pelo slug
      *
-     * @param string $companySlug Slug da empresa
+     * @param  string  $companySlug  Slug da empresa
      * @return bool true se a empresa foi encontrada, false caso contrário
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = Company::where('slug', $companySlug)->first();
 
-        if (!$this->company) {
+        if (! $this->company) {
             error("❌ Empresa não encontrada: {$companySlug}");
+
             return false;
         }
 
@@ -135,10 +140,12 @@ class ListThreadCommand extends Command
 
         if ($threads->isEmpty()) {
             info("ℹ️ Nenhuma conversa encontrada para a empresa {$this->company->name}");
+
             return false;
         }
 
         $this->displayThreadsTable($threads);
+
         return true;
     }
 
@@ -150,15 +157,14 @@ class ListThreadCommand extends Command
     private function getCompanyThreads()
     {
         return Thread::where('company_id', $this->company->id)
-                     ->with('assistant')
-                     ->get();
+            ->with('assistant')
+            ->get();
     }
 
     /**
      * Exibe os threads em formato de tabela
      *
-     * @param \Illuminate\Database\Eloquent\Collection $threads Coleção de threads
-     * @return void
+     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Coleção de threads
      */
     private function displayThreadsTable($threads): void
     {
@@ -175,7 +181,7 @@ class ListThreadCommand extends Command
     /**
      * Prepara os dados dos threads para exibição em tabela
      *
-     * @param \Illuminate\Database\Eloquent\Collection $threads Coleção de threads
+     * @param  \Illuminate\Database\Eloquent\Collection  $threads  Coleção de threads
      * @return array Dados formatados para a tabela
      */
     private function prepareThreadsTableData($threads): array
@@ -185,15 +191,13 @@ class ListThreadCommand extends Command
                 'ID' => $thread->thread_id,
                 'Assistente' => $thread->assistant->name,
                 'Criado em' => $thread->created_at->format('d/m/Y H:i'),
-                'Status' => $thread->status
+                'Status' => $thread->status,
             ];
         })->toArray();
     }
 
     /**
      * Oferece opção para visualizar mensagens de um thread específico
-     *
-     * @return void
      */
     private function offerViewMessages(): void
     {
@@ -214,7 +218,7 @@ class ListThreadCommand extends Command
         if ($selectedThread !== 'cancel') {
             $this->call('ai:chat-list', [
                 'thread_id' => $selectedThread,
-                '--interactive' => true
+                '--interactive' => true,
             ]);
         }
     }

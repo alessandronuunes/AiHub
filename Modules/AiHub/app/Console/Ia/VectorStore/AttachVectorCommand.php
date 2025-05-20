@@ -3,11 +3,17 @@
 namespace Modules\AiHub\Console\Ia\VectorStore;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Assistant;
 use Modules\AiHub\Models\Company;
 use Modules\AiHub\Models\VectorStore;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 
 class AttachVectorCommand extends Command
 {
@@ -39,8 +45,6 @@ class AttachVectorCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -57,7 +61,7 @@ class AttachVectorCommand extends Command
 
         try {
             // Seleciona a empresa
-            if (!$this->selectCompany()) {
+            if (! $this->selectCompany()) {
                 return 1;
             }
 
@@ -65,31 +69,34 @@ class AttachVectorCommand extends Command
             $this->aiService->forCompany($this->company->slug);
 
             // Seleciona o assistente
-            if (!$this->selectAssistant()) {
+            if (! $this->selectAssistant()) {
                 return 1;
             }
 
             // Seleciona a Vector Store
-            if (!$this->selectVectorStore()) {
+            if (! $this->selectVectorStore()) {
                 return 1;
             }
 
             // Confirma a vinculação
-            if (!$this->confirmAttachment()) {
+            if (! $this->confirmAttachment()) {
                 outro('Operação cancelada.');
+
                 return 0;
             }
 
             // Executa a vinculação
             if ($this->executeAttachment()) {
                 outro('Operação concluída.');
+
                 return 0;
             }
 
             return 1;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao vincular Vector Store: " . $e->getMessage());
+            error("\n❌ Erro ao vincular Vector Store: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -103,7 +110,7 @@ class AttachVectorCommand extends Command
     {
         $companySlug = $this->argument('company');
 
-        if (!$companySlug || $this->option('interactive')) {
+        if (! $companySlug || $this->option('interactive')) {
             return $this->selectCompanyInteractively();
         }
 
@@ -121,7 +128,8 @@ class AttachVectorCommand extends Command
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error("❌ Nenhuma empresa cadastrada!");
+            error('❌ Nenhuma empresa cadastrada!');
+
             return false;
         }
 
@@ -136,22 +144,24 @@ class AttachVectorCommand extends Command
     /**
      * Encontra a empresa pelo slug
      *
-     * @param string $companySlug Slug da empresa
+     * @param  string  $companySlug  Slug da empresa
      * @return bool true se a empresa foi encontrada, false caso contrário
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
-            fn() => Company::where('slug', $companySlug)->first(),
+            fn () => Company::where('slug', $companySlug)->first(),
             'Buscando empresa...'
         );
 
-        if (!$this->company) {
+        if (! $this->company) {
             error("❌ Empresa não encontrada: {$companySlug}");
+
             return false;
         }
 
         info("📝 Empresa selecionada: {$this->company->name}");
+
         return true;
     }
 
@@ -166,7 +176,8 @@ class AttachVectorCommand extends Command
         $assistants = $this->getCompanyAssistants();
 
         if ($assistants->isEmpty()) {
-            error("❌ Nenhum Assistente encontrado para a empresa!");
+            error('❌ Nenhum Assistente encontrado para a empresa!');
+
             return false;
         }
 
@@ -193,20 +204,21 @@ class AttachVectorCommand extends Command
     /**
      * Encontra um assistente pelo ID
      *
-     * @param string $assistantId ID do assistente na OpenAI
+     * @param  string  $assistantId  ID do assistente na OpenAI
      * @return bool true se o assistente foi encontrado, false caso contrário
      */
     private function findAssistantById(string $assistantId): bool
     {
         $this->assistant = spin(
-            fn() => Assistant::where('assistant_id', $assistantId)
+            fn () => Assistant::where('assistant_id', $assistantId)
                 ->where('company_id', $this->company->id)
                 ->first(),
             'Buscando assistente...'
         );
 
-        if (!$this->assistant) {
-            error("❌ Assistente não encontrado!");
+        if (! $this->assistant) {
+            error('❌ Assistente não encontrado!');
+
             return false;
         }
 
@@ -224,7 +236,8 @@ class AttachVectorCommand extends Command
         $vectorStores = $this->getCompanyVectorStores();
 
         if ($vectorStores->isEmpty()) {
-            error("❌ Nenhuma Vector Store encontrada!");
+            error('❌ Nenhuma Vector Store encontrada!');
+
             return false;
         }
 
@@ -251,20 +264,21 @@ class AttachVectorCommand extends Command
     /**
      * Encontra uma Vector Store pelo ID
      *
-     * @param string $vectorStoreId ID da Vector Store na OpenAI
+     * @param  string  $vectorStoreId  ID da Vector Store na OpenAI
      * @return bool true se a Vector Store foi encontrada, false caso contrário
      */
     private function findVectorStoreById(string $vectorStoreId): bool
     {
         $this->vectorStore = spin(
-            fn() => VectorStore::where('vector_store_id', $vectorStoreId)
+            fn () => VectorStore::where('vector_store_id', $vectorStoreId)
                 ->where('company_id', $this->company->id)
                 ->first(),
             'Buscando Vector Store...'
         );
 
-        if (!$this->vectorStore) {
-            error("❌ Vector Store não encontrada!");
+        if (! $this->vectorStore) {
+            error('❌ Vector Store não encontrada!');
+
             return false;
         }
 
@@ -280,6 +294,7 @@ class AttachVectorCommand extends Command
     {
         if ($this->option('interactive')) {
             $this->displayAttachmentSummary();
+
             return confirm('Deseja vincular a Vector Store ao Assistente?', true);
         }
 
@@ -288,8 +303,6 @@ class AttachVectorCommand extends Command
 
     /**
      * Exibe um resumo da vinculação
-     *
-     * @return void
      */
     private function displayAttachmentSummary(): void
     {
@@ -315,6 +328,7 @@ class AttachVectorCommand extends Command
         $this->saveRelationshipToDatabase();
 
         info("\n✅ Vector Store vinculada com sucesso ao Assistente!");
+
         return true;
     }
 
@@ -326,19 +340,19 @@ class AttachVectorCommand extends Command
     private function updateAssistantOnOpenAI()
     {
         return spin(
-            fn() => $this->aiService->assistant()->modify($this->assistant->assistant_id, [
+            fn () => $this->aiService->assistant()->modify($this->assistant->assistant_id, [
                 'name' => $this->assistant->name,
                 'instructions' => $this->assistant->instructions,
                 'tools' => [
                     ['type' => 'code_interpreter'],
-                    ['type' => 'file_search']
+                    ['type' => 'file_search'],
                 ],
                 'tool_resources' => [
                     'file_search' => [
-                        'vector_store_ids' => [$this->vectorStore->vector_store_id]
-                    ]
+                        'vector_store_ids' => [$this->vectorStore->vector_store_id],
+                    ],
                 ],
-                'model' => 'gpt-4-turbo-preview'
+                'model' => 'gpt-4-turbo-preview',
             ]),
             'Atualizando...'
         );
@@ -346,8 +360,6 @@ class AttachVectorCommand extends Command
 
     /**
      * Salva a relação entre o Assistente e a Vector Store no banco de dados
-     *
-     * @return void
      */
     private function saveRelationshipToDatabase(): void
     {

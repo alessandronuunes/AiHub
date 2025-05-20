@@ -9,14 +9,12 @@ class AiServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
-     *
-     * @return void
      */
     public function register(): void
     {
         // Registra a AiFactory no contêiner de serviços
         $this->app->singleton(AiFactory::class, function ($app) {
-            return new AiFactory();
+            return new AiFactory;
         });
 
         // Registra o AiService no contêiner de serviços
@@ -31,8 +29,6 @@ class AiServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
     public function boot(): void
     {

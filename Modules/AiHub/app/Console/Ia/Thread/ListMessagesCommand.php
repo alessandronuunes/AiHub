@@ -3,10 +3,16 @@
 namespace Modules\AiHub\Console\Ia\Thread;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Message;
 use Modules\AiHub\Models\Thread;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 
 class ListMessagesCommand extends Command
 {
@@ -37,8 +43,6 @@ class ListMessagesCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -58,12 +62,12 @@ class ListMessagesCommand extends Command
             $this->setMessageLimit();
 
             // Seleciona o thread
-            if (!$this->selectThread()) {
+            if (! $this->selectThread()) {
                 return 1;
             }
 
             // Recupera e exibe as mensagens
-            if (!$this->fetchAndDisplayMessages()) {
+            if (! $this->fetchAndDisplayMessages()) {
                 return 0;
             }
 
@@ -71,18 +75,18 @@ class ListMessagesCommand extends Command
             $this->offerAdditionalOptions();
 
             outro('Visualização concluída.');
+
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao listar mensagens: " . $e->getMessage());
+            error("\n❌ Erro ao listar mensagens: ".$e->getMessage());
+
             return 1;
         }
     }
 
     /**
      * Define o limite de mensagens a serem exibidas
-     *
-     * @return void
      */
     private function setMessageLimit(): void
     {
@@ -98,7 +102,7 @@ class ListMessagesCommand extends Command
     {
         $threadId = $this->argument('thread_id');
 
-        if (!$threadId || $this->option('interactive')) {
+        if (! $threadId || $this->option('interactive')) {
             return $this->selectThreadInteractively();
         }
 
@@ -116,7 +120,8 @@ class ListMessagesCommand extends Command
         $threads = $this->getAvailableThreads();
 
         if (empty($threads)) {
-            error("❌ Nenhum thread ativo encontrado!");
+            error('❌ Nenhum thread ativo encontrado!');
+
             return false;
         }
 
@@ -140,8 +145,9 @@ class ListMessagesCommand extends Command
             ->get()
             ->mapWithKeys(function ($thread) {
                 $messageCount = Message::where('thread_id', $thread->id)->count();
+
                 return [
-                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name}) - {$messageCount} mensagens"
+                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name}) - {$messageCount} mensagens",
                 ];
             })
             ->toArray();
@@ -150,22 +156,24 @@ class ListMessagesCommand extends Command
     /**
      * Encontra um thread pelo ID
      *
-     * @param string $threadId ID do thread
+     * @param  string  $threadId  ID do thread
      * @return bool true se o thread foi encontrado, false caso contrário
      */
     private function findThreadById(string $threadId): bool
     {
         $this->thread = spin(
-            fn() => Thread::where('thread_id', $threadId)->first(),
+            fn () => Thread::where('thread_id', $threadId)->first(),
             'Buscando thread...'
         );
 
-        if (!$this->thread) {
+        if (! $this->thread) {
             error("❌ Thread não encontrado: {$threadId}");
+
             return false;
         }
 
         info("📝 Thread selecionado: {$this->thread->thread_id} ({$this->thread->company->name})");
+
         return true;
     }
 
@@ -180,24 +188,25 @@ class ListMessagesCommand extends Command
 
         // Usa o aiService ao invés do threadService
         $messages = spin(
-            fn() => $this->aiService->thread()->listMessages($this->thread->thread_id, ['limit' => $this->limit]),
+            fn () => $this->aiService->thread()->listMessages($this->thread->thread_id, ['limit' => $this->limit]),
             'Aguarde...'
         );
 
         if (empty($messages->data)) {
             info("\n⚠️ Nenhuma mensagem encontrada neste thread.");
+
             return false;
         }
 
         $this->displayMessages($messages->data);
+
         return true;
     }
 
     /**
      * Exibe as mensagens em ordem cronológica
      *
-     * @param array $messages Array de mensagens
-     * @return void
+     * @param  array  $messages  Array de mensagens
      */
     private function displayMessages(array $messages): void
     {
@@ -213,8 +222,7 @@ class ListMessagesCommand extends Command
     /**
      * Exibe uma única mensagem formatada
      *
-     * @param object $message Objeto de mensagem
-     * @return void
+     * @param  object  $message  Objeto de mensagem
      */
     private function displaySingleMessage(object $message): void
     {
@@ -231,8 +239,6 @@ class ListMessagesCommand extends Command
 
     /**
      * Oferece opções adicionais se estiver em modo interativo
-     *
-     * @return void
      */
     private function offerAdditionalOptions(): void
     {
@@ -240,7 +246,7 @@ class ListMessagesCommand extends Command
             if (confirm('Deseja enviar uma nova mensagem para este thread?', true)) {
                 $this->call('thread:message', [
                     'thread_id' => $this->thread->thread_id,
-                    '--interactive' => true
+                    '--interactive' => true,
                 ]);
             }
         }

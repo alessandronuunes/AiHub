@@ -3,10 +3,17 @@
 namespace Modules\AiHub\Console\Ia\Thread;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Message;
 use Modules\AiHub\Models\Thread;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin, text};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\text;
 
 class SendMessageCommand extends Command
 {
@@ -39,8 +46,6 @@ class SendMessageCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -57,24 +62,26 @@ class SendMessageCommand extends Command
 
         try {
             // Seleciona o thread
-            if (!$this->selectThread()) {
+            if (! $this->selectThread()) {
                 return 1;
             }
 
             // Obtém a mensagem a ser enviada
-            if (!$this->collectMessage()) {
+            if (! $this->collectMessage()) {
                 outro('Operação cancelada.');
+
                 return 0;
             }
 
             // Confirma o envio da mensagem
-            if (!$this->confirmMessageSending()) {
+            if (! $this->confirmMessageSending()) {
                 outro('Operação cancelada.');
+
                 return 0;
             }
 
             // Envia a mensagem e processa a resposta
-            if (!$this->sendMessageAndProcessResponse()) {
+            if (! $this->sendMessageAndProcessResponse()) {
                 return 1;
             }
 
@@ -84,10 +91,12 @@ class SendMessageCommand extends Command
             }
 
             outro('Conversa finalizada.');
+
             return 0;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao enviar mensagem: " . $e->getMessage());
+            error("\n❌ Erro ao enviar mensagem: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -101,7 +110,7 @@ class SendMessageCommand extends Command
     {
         $threadId = $this->argument('thread_id');
 
-        if (!$threadId || $this->option('interactive')) {
+        if (! $threadId || $this->option('interactive')) {
             return $this->selectThreadInteractively();
         }
 
@@ -119,7 +128,8 @@ class SendMessageCommand extends Command
         $threads = $this->getAvailableThreads();
 
         if (empty($threads)) {
-            error("❌ Nenhum thread ativo encontrado!");
+            error('❌ Nenhum thread ativo encontrado!');
+
             return false;
         }
 
@@ -143,7 +153,7 @@ class SendMessageCommand extends Command
             ->get()
             ->mapWithKeys(function ($thread) {
                 return [
-                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name})"
+                    $thread->thread_id => "Thread {$thread->thread_id} ({$thread->company->name})",
                 ];
             })
             ->toArray();
@@ -152,22 +162,24 @@ class SendMessageCommand extends Command
     /**
      * Encontra um thread pelo ID
      *
-     * @param string $threadId ID do thread
+     * @param  string  $threadId  ID do thread
      * @return bool true se o thread foi encontrado, false caso contrário
      */
     private function findThreadById(string $threadId): bool
     {
         $this->thread = spin(
-            fn() => Thread::where('thread_id', $threadId)->first(),
+            fn () => Thread::where('thread_id', $threadId)->first(),
             'Buscando thread...'
         );
 
-        if (!$this->thread) {
+        if (! $this->thread) {
             error("❌ Thread não encontrado: {$threadId}");
+
             return false;
         }
 
         info("📝 Thread selecionado: {$this->thread->thread_id} ({$this->thread->company->name})");
+
         return true;
     }
 
@@ -180,7 +192,7 @@ class SendMessageCommand extends Command
     {
         $message = $this->option('message');
 
-        if (!$message) {
+        if (! $message) {
             $message = text(
                 label: 'Digite sua mensagem:',
                 required: true,
@@ -192,12 +204,14 @@ class SendMessageCommand extends Command
         }
 
         // Verifica se a mensagem é válida
-        if (!$message || strlen(trim($message)) < 2) {
-            error("❌ Mensagem inválida. A mensagem deve ter pelo menos 2 caracteres.");
+        if (! $message || strlen(trim($message)) < 2) {
+            error('❌ Mensagem inválida. A mensagem deve ter pelo menos 2 caracteres.');
+
             return false;
         }
 
         $this->message = $message;
+
         return true;
     }
 
@@ -223,8 +237,9 @@ class SendMessageCommand extends Command
     private function sendMessageAndProcessResponse(): bool
     {
         // Verifica se a mensagem está definida antes de prosseguir
-        if (!$this->message) {
-            error("❌ Não há mensagem para enviar.");
+        if (! $this->message) {
+            error('❌ Não há mensagem para enviar.');
+
             return false;
         }
 
@@ -242,8 +257,9 @@ class SendMessageCommand extends Command
         // Aguarda e recupera a resposta do assistente
         $response = $this->waitForAssistantResponse($run['run_id']);
 
-        if (!$response) {
-            error("❌ Tempo limite excedido ao aguardar resposta do assistente.");
+        if (! $response) {
+            error('❌ Tempo limite excedido ao aguardar resposta do assistente.');
+
             return false;
         }
 
@@ -255,11 +271,12 @@ class SendMessageCommand extends Command
             [
                 'created_by' => 'assistant',
                 'run_id' => $run['run_id'],
-                'timestamp' => now()->toIso8601String()
+                'timestamp' => now()->toIso8601String(),
             ]
         );
 
         $this->displayAssistantResponse($response['content']);
+
         return true;
     }
 
@@ -271,7 +288,7 @@ class SendMessageCommand extends Command
     private function sendMessageToOpenAI(): string
     {
         return spin(
-            fn() => $this->aiService->thread()->addMessage($this->thread->thread_id, $this->message)->id,
+            fn () => $this->aiService->thread()->addMessage($this->thread->thread_id, $this->message)->id,
             'Aguarde...'
         );
     }
@@ -279,13 +296,12 @@ class SendMessageCommand extends Command
     /**
      * Salva a mensagem no banco de dados
      *
-     * @param string $messageId ID da mensagem na API
-     * @param string $role Papel da mensagem (user/assistant)
-     * @param string $content Conteúdo da mensagem
-     * @param array $metadata Metadados adicionais (opcional)
-     * @return void
+     * @param  string  $messageId  ID da mensagem na API
+     * @param  string  $role  Papel da mensagem (user/assistant)
+     * @param  string  $content  Conteúdo da mensagem
+     * @param  array  $metadata  Metadados adicionais (opcional)
      */
-    private function saveMessageToDatabase(string $messageId, string $role, string $content, array $metadata = null): void
+    private function saveMessageToDatabase(string $messageId, string $role, string $content, ?array $metadata = null): void
     {
         Message::create([
             'thread_id' => $this->thread->id,
@@ -294,8 +310,8 @@ class SendMessageCommand extends Command
             'content' => $content,
             'metadata' => $metadata ?? [
                 'created_by' => 'console',
-                'timestamp' => now()->toIso8601String()
-            ]
+                'timestamp' => now()->toIso8601String(),
+            ],
         ]);
     }
 
@@ -313,14 +329,14 @@ class SendMessageCommand extends Command
 
         return [
             'run_id' => $run->id,
-            'status' => $run->status
+            'status' => $run->status,
         ];
     }
 
     /**
      * Aguarda e recupera a resposta do assistente
      *
-     * @param string $runId ID da execução
+     * @param  string  $runId  ID da execução
      * @return array|false Dados da resposta ou false em caso de timeout
      */
     private function waitForAssistantResponse(string $runId)
@@ -329,12 +345,12 @@ class SendMessageCommand extends Command
 
         // Aguarda resposta usando o aiService
         $response = spin(
-            fn() => $this->aiService->thread()->waitForResponse($this->thread->thread_id, $runId),
+            fn () => $this->aiService->thread()->waitForResponse($this->thread->thread_id, $runId),
             'Processando...'
         );
 
         // Se não houver resposta, retorna false
-        if (!$response) {
+        if (! $response) {
             return false;
         }
 
@@ -342,15 +358,14 @@ class SendMessageCommand extends Command
         return [
             'message_id' => $response->id,
             'content' => $response->content[0]->text->value,
-            'role' => $response->role
+            'role' => $response->role,
         ];
     }
 
     /**
      * Exibe a resposta do assistente
      *
-     * @param string $content Conteúdo da resposta
-     * @return void
+     * @param  string  $content  Conteúdo da resposta
      */
     private function displayAssistantResponse(string $content): void
     {

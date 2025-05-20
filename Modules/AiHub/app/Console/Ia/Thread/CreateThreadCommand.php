@@ -3,10 +3,16 @@
 namespace Modules\AiHub\Console\Ia\Thread;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Company;
 use Modules\AiHub\Models\Thread;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 
 class CreateThreadCommand extends Command
 {
@@ -31,8 +37,6 @@ class CreateThreadCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -52,30 +56,33 @@ class CreateThreadCommand extends Command
             // $this->initializeThreadService(); // REMOVER esta linha
 
             // Seleciona a empresa
-            if (!$this->selectCompany()) {
+            if (! $this->selectCompany()) {
                 return 1;
             }
 
             // Verifica se a empresa possui assistente
-            if (!$this->validateAssistant()) {
+            if (! $this->validateAssistant()) {
                 return 1;
             }
 
             // Confirma a criação do thread
-            if (!$this->confirmThreadCreation()) {
+            if (! $this->confirmThreadCreation()) {
                 outro('Operação cancelada.');
+
                 return 0;
             }
 
             // Cria o thread
             if ($this->createThread()) {
                 outro('Operação concluída.');
+
                 return 0;
             }
 
             return 1;
         } catch (\Exception $e) {
-            error("\n❌ Erro ao criar thread: " . $e->getMessage());
+            error("\n❌ Erro ao criar thread: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -100,7 +107,7 @@ class CreateThreadCommand extends Command
     {
         $companySlug = $this->argument('company');
 
-        if (!$companySlug || $this->option('interactive')) {
+        if (! $companySlug || $this->option('interactive')) {
             return $this->selectCompanyInteractively();
         }
 
@@ -118,7 +125,8 @@ class CreateThreadCommand extends Command
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error("❌ Nenhuma empresa cadastrada!");
+            error('❌ Nenhuma empresa cadastrada!');
+
             return false;
         }
 
@@ -133,22 +141,24 @@ class CreateThreadCommand extends Command
     /**
      * Encontra a empresa pelo slug
      *
-     * @param string $companySlug Slug da empresa
+     * @param  string  $companySlug  Slug da empresa
      * @return bool true se a empresa foi encontrada, false caso contrário
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
-            fn() => Company::where('slug', $companySlug)->first(),
+            fn () => Company::where('slug', $companySlug)->first(),
             'Buscando empresa...'
         );
 
-        if (!$this->company) {
+        if (! $this->company) {
             error("❌ Empresa não encontrada: {$companySlug}");
+
             return false;
         }
 
         info("📝 Empresa selecionada: {$this->company->name}");
+
         return true;
     }
 
@@ -160,12 +170,13 @@ class CreateThreadCommand extends Command
     private function validateAssistant(): bool
     {
         $assistant = spin(
-            fn() => $this->company->assistants()->first(),
+            fn () => $this->company->assistants()->first(),
             'Verificando assistente...'
         );
 
-        if (!$assistant) {
+        if (! $assistant) {
             error("❌ Nenhum assistente encontrado para a empresa {$this->company->name}");
+
             return false;
         }
 
@@ -197,7 +208,7 @@ class CreateThreadCommand extends Command
 
         // Usa o serviço AiService injetado para criar o thread
         $threadId = spin(
-            fn() => $this->aiService->thread()->create()->id, // Acessa o serviço de thread através de AiService
+            fn () => $this->aiService->thread()->create()->id, // Acessa o serviço de thread através de AiService
             'Aguarde...'
         );
 
@@ -215,9 +226,8 @@ class CreateThreadCommand extends Command
     /**
      * Salva o thread no banco de dados
      *
-     * @param string $threadId ID do thread criado na API
-     * @param int $assistantId ID do assistente no banco local
-     * @return void
+     * @param  string  $threadId  ID do thread criado na API
+     * @param  int  $assistantId  ID do assistente no banco local
      */
     private function saveThreadToDatabase(string $threadId, int $assistantId): void
     {
@@ -228,16 +238,15 @@ class CreateThreadCommand extends Command
             'status' => 'active',
             'metadata' => [
                 'created_by' => 'console',
-                'company_slug' => $this->company->slug
-            ]
+                'company_slug' => $this->company->slug,
+            ],
         ]);
     }
 
     /**
      * Exibe mensagem de sucesso após a criação do thread
      *
-     * @param string $threadId ID do thread criado
-     * @return void
+     * @param  string  $threadId  ID do thread criado
      */
     private function displaySuccessMessage(string $threadId): void
     {

@@ -13,11 +13,11 @@ class Thread extends Model
         'assistant_id',
         'thread_id',
         'status',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     public function company(): BelongsTo

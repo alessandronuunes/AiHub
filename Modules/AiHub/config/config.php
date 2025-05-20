@@ -9,5 +9,5 @@ return [
             'model' => env('OPENAI_MODEL'),
         ],
         // outros provedores
-    ]
+    ],
 ];

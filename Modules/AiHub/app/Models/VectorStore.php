@@ -11,11 +11,11 @@ class VectorStore extends Model
         'vector_store_id',
         'name',
         'description',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     public function company()

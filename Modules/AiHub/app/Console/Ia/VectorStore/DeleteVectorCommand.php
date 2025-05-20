@@ -3,10 +3,16 @@
 namespace Modules\AiHub\Console\Ia\VectorStore;
 
 use Illuminate\Console\Command;
+use Modules\AiHub\Ai\AiService;
 use Modules\AiHub\Models\Company;
 use Modules\AiHub\Models\VectorStore;
-use Modules\AiHub\Ai\AiService;
-use function Laravel\Prompts\{confirm, error, info, outro, select, spin};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 
 class DeleteVectorCommand extends Command
 {
@@ -38,8 +44,6 @@ class DeleteVectorCommand extends Command
 
     /**
      * Construtor para injetar dependências
-     *
-     * @param AiService $aiService
      */
     public function __construct(AiService $aiService)
     {
@@ -56,7 +60,7 @@ class DeleteVectorCommand extends Command
 
         try {
             // Seleciona a empresa
-            if (!$this->selectCompany()) {
+            if (! $this->selectCompany()) {
                 return 1;
             }
 
@@ -64,25 +68,27 @@ class DeleteVectorCommand extends Command
             $this->aiService->forCompany($this->company->slug);
 
             // Seleciona a Vector Store
-            if (!$this->selectVectorStore()) {
+            if (! $this->selectVectorStore()) {
                 return 1;
             }
 
             // Busca os arquivos da Vector Store
-            if (!$this->fetchVectorStoreFiles()) {
+            if (! $this->fetchVectorStoreFiles()) {
                 return 1;
             }
 
             // Processa a exclusão
             if ($this->processVectorStoreDeletion()) {
                 outro('Operação concluída.');
+
                 return 0;
             }
 
             return 1;
 
         } catch (\Exception $e) {
-            error("\n❌ Erro ao deletar: " . $e->getMessage());
+            error("\n❌ Erro ao deletar: ".$e->getMessage());
+
             return 1;
         }
     }
@@ -96,7 +102,7 @@ class DeleteVectorCommand extends Command
     {
         $companySlug = $this->argument('company');
 
-        if (!$companySlug || $this->option('interactive')) {
+        if (! $companySlug || $this->option('interactive')) {
             return $this->selectCompanyInteractively();
         }
 
@@ -114,7 +120,8 @@ class DeleteVectorCommand extends Command
         $companies = Company::pluck('name', 'slug')->toArray();
 
         if (empty($companies)) {
-            error("❌ Nenhuma empresa cadastrada!");
+            error('❌ Nenhuma empresa cadastrada!');
+
             return false;
         }
 
@@ -129,22 +136,24 @@ class DeleteVectorCommand extends Command
     /**
      * Encontra a empresa pelo slug
      *
-     * @param string $companySlug Slug da empresa
+     * @param  string  $companySlug  Slug da empresa
      * @return bool true se a empresa foi encontrada, false caso contrário
      */
     private function findCompanyBySlug(string $companySlug): bool
     {
         $this->company = spin(
-            fn() => Company::where('slug', $companySlug)->first(),
+            fn () => Company::where('slug', $companySlug)->first(),
             'Buscando empresa...'
         );
 
-        if (!$this->company) {
+        if (! $this->company) {
             error("❌ Empresa não encontrada: {$companySlug}");
+
             return false;
         }
 
         info("📝 Empresa selecionada: {$this->company->name}");
+
         return true;
     }
 
@@ -159,7 +168,8 @@ class DeleteVectorCommand extends Command
         $vectorStores = $this->getCompanyVectorStores();
 
         if ($vectorStores->isEmpty()) {
-            error("❌ Nenhuma Vector Store encontrada!");
+            error('❌ Nenhuma Vector Store encontrada!');
+
             return false;
         }
 
@@ -186,20 +196,21 @@ class DeleteVectorCommand extends Command
     /**
      * Encontra uma Vector Store pelo ID
      *
-     * @param string $vectorStoreId ID da Vector Store na OpenAI
+     * @param  string  $vectorStoreId  ID da Vector Store na OpenAI
      * @return bool true se a Vector Store foi encontrada, false caso contrário
      */
     private function findVectorStoreById(string $vectorStoreId): bool
     {
         $this->vectorStore = spin(
-            fn() => VectorStore::where('vector_store_id', $vectorStoreId)
+            fn () => VectorStore::where('vector_store_id', $vectorStoreId)
                 ->where('company_id', $this->company->id)
                 ->first(),
             'Buscando Vector Store...'
         );
 
-        if (!$this->vectorStore) {
-            error("❌ Vector Store não encontrada!");
+        if (! $this->vectorStore) {
+            error('❌ Vector Store não encontrada!');
+
             return false;
         }
 
@@ -215,7 +226,7 @@ class DeleteVectorCommand extends Command
     {
         info("\n📁 Verificando arquivos...");
         $this->files = spin(
-            fn() => $this->aiService->vectorStore()->listFiles($this->vectorStore->vector_store_id),
+            fn () => $this->aiService->vectorStore()->listFiles($this->vectorStore->vector_store_id),
             'Listando arquivos...'
         );
 
@@ -229,7 +240,7 @@ class DeleteVectorCommand extends Command
      */
     private function processVectorStoreDeletion(): bool
     {
-        if (!empty($this->files->data)) {
+        if (! empty($this->files->data)) {
             return $this->handleVectorStoreWithFiles();
         } else {
             return $this->deleteEmptyVectorStore();
@@ -243,7 +254,7 @@ class DeleteVectorCommand extends Command
      */
     private function handleVectorStoreWithFiles(): bool
     {
-        info("\n⚠️ Esta Vector Store possui " . count($this->files->data) . " arquivo(s) anexado(s).");
+        info("\n⚠️ Esta Vector Store possui ".count($this->files->data).' arquivo(s) anexado(s).');
 
         // Exibe os arquivos
         $this->displayVectorStoreFiles();
@@ -258,14 +269,13 @@ class DeleteVectorCommand extends Command
                 return $this->deleteOneFile();
             default:
                 info('Operação cancelada.');
+
                 return false;
         }
     }
 
     /**
      * Exibe os arquivos da Vector Store
-     *
-     * @return void
      */
     private function displayVectorStoreFiles(): void
     {
@@ -286,7 +296,7 @@ class DeleteVectorCommand extends Command
             options: [
                 'delete_all' => 'Apagar todos os arquivos e a Vector Store',
                 'delete_one' => 'Apagar apenas um arquivo específico',
-                'cancel' => 'Cancelar operação'
+                'cancel' => 'Cancelar operação',
             ]
         );
     }
@@ -298,8 +308,9 @@ class DeleteVectorCommand extends Command
      */
     private function deleteAllFilesAndVectorStore(): bool
     {
-        if (!confirm(' Tem certeza que deseja apagar todos os arquivos e a Vector Store?', false)) {
+        if (! confirm(' Tem certeza que deseja apagar todos os arquivos e a Vector Store?', false)) {
             info('Operação cancelada.');
+
             return false;
         }
 
@@ -319,16 +330,14 @@ class DeleteVectorCommand extends Command
 
     /**
      * Exclui todos os arquivos da Vector Store
-     *
-     * @return void
      */
     private function deleteAllFiles(): void
     {
         info("\n🗑️ Removendo arquivos...");
         $fileIds = collect($this->files->data)->pluck('id')->toArray();
         spin(
-            fn() => $this->aiService->vectorStore()->removeFiles($this->vectorStore->vector_store_id, $fileIds),
-            "Removendo arquivos..."
+            fn () => $this->aiService->vectorStore()->removeFiles($this->vectorStore->vector_store_id, $fileIds),
+            'Removendo arquivos...'
         );
     }
 
@@ -346,7 +355,7 @@ class DeleteVectorCommand extends Command
         );
 
         spin(
-            fn() => $this->aiService->vectorStore()->removeFiles($this->vectorStore->vector_store_id, [$fileId]),
+            fn () => $this->aiService->vectorStore()->removeFiles($this->vectorStore->vector_store_id, [$fileId]),
             'Removendo arquivo...'
         );
         info("\n✅ Arquivo deletado com sucesso!");
@@ -361,25 +370,25 @@ class DeleteVectorCommand extends Command
      */
     private function deleteEmptyVectorStore(): bool
     {
-        if (!confirm('Confirma a exclusão da Vector Store?', false)) {
+        if (! confirm('Confirma a exclusão da Vector Store?', false)) {
             info('Operação cancelada.');
+
             return false;
         }
 
         $this->deleteVectorStore();
         info("\n✅ Vector Store deletada com sucesso!");
+
         return true;
     }
 
     /**
      * Exclui a Vector Store da API
-     *
-     * @return void
      */
     private function deleteVectorStore(): void
     {
         spin(
-            fn() => $this->aiService->vectorStore()->delete($this->vectorStore->vector_store_id),
+            fn () => $this->aiService->vectorStore()->delete($this->vectorStore->vector_store_id),
             'Removendo Vector Store...'
         );
 

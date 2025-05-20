@@ -3,11 +3,11 @@
 namespace Modules\AiHub\Ai;
 
 use Modules\AiHub\Ai\Contracts\Ai;
-use Modules\AiHub\Ai\Factory\AiFactory;
 use Modules\AiHub\Ai\Contracts\Assistant;
+use Modules\AiHub\Ai\Contracts\File;
 use Modules\AiHub\Ai\Contracts\Thread;
 use Modules\AiHub\Ai\Contracts\VectorStore;
-use Modules\AiHub\Ai\Contracts\File;
+use Modules\AiHub\Ai\Factory\AiFactory;
 
 /**
  * Serviço principal para interagir com provedores de IA.
@@ -16,13 +16,15 @@ use Modules\AiHub\Ai\Contracts\File;
 class AiService
 {
     protected AiFactory $factory;
+
     protected ?string $defaultProvider = null;
+
     protected ?string $defaultCompanySlug = null;
 
     /**
      * Construtor.
      *
-     * @param AiFactory $factory Instância da fábrica de IA.
+     * @param  AiFactory  $factory  Instância da fábrica de IA.
      */
     public function __construct(AiFactory $factory)
     {
@@ -32,33 +34,34 @@ class AiService
     /**
      * Define o provedor de IA padrão para esta instância do serviço.
      *
-     * @param string $provider O nome do provedor (ex: 'openai').
+     * @param  string  $provider  O nome do provedor (ex: 'openai').
      * @return $this
      */
     public function provider(string $provider): self
     {
         $this->defaultProvider = $provider;
+
         return $this;
     }
 
     /**
      * Define o slug da empresa padrão para esta instância do serviço.
      *
-     * @param string|null $companySlug O slug da empresa.
+     * @param  string|null  $companySlug  O slug da empresa.
      * @return $this
      */
     public function forCompany(?string $companySlug): self
     {
         $this->defaultCompanySlug = $companySlug;
+
         return $this;
     }
 
     /**
      * Obtém a instância do cliente de IA configurado.
      *
-     * @param string|null $provider O nome do provedor (se diferente do padrão).
-     * @param string|null $companySlug O slug da empresa (se diferente do padrão).
-     * @return Ai
+     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
+     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
      */
     protected function getAiClient(?string $provider = null, ?string $companySlug = null): Ai
     {
@@ -77,9 +80,8 @@ class AiService
     /**
      * Obtém o serviço de Assistente do provedor de IA configurado.
      *
-     * @param string|null $provider O nome do provedor (se diferente do padrão).
-     * @param string|null $companySlug O slug da empresa (se diferente do padrão).
-     * @return Assistant
+     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
+     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
      */
     public function assistant(?string $provider = null, ?string $companySlug = null): Assistant
     {
@@ -89,9 +91,8 @@ class AiService
     /**
      * Obtém o serviço de Thread do provedor de IA configurado.
      *
-     * @param string|null $provider O nome do provedor (se diferente do padrão).
-     * @param string|null $companySlug O slug da empresa (se diferente do padrão).
-     * @return Thread
+     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
+     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
      */
     public function thread(?string $provider = null, ?string $companySlug = null): Thread
     {
@@ -101,9 +102,8 @@ class AiService
     /**
      * Obtém o serviço de Vector Store do provedor de IA configurado.
      *
-     * @param string|null $provider O nome do provedor (se diferente do padrão).
-     * @param string|null $companySlug O slug da empresa (se diferente do padrão).
-     * @return VectorStore
+     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
+     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
      */
     public function vectorStore(?string $provider = null, ?string $companySlug = null): VectorStore
     {
@@ -113,9 +113,8 @@ class AiService
     /**
      * Obtém o serviço de Arquivo do provedor de IA configurado.
      *
-     * @param string|null $provider O nome do provedor (se diferente do padrão).
-     * @param string|null $companySlug O slug da empresa (se diferente do padrão).
-     * @return File
+     * @param  string|null  $provider  O nome do provedor (se diferente do padrão).
+     * @param  string|null  $companySlug  O slug da empresa (se diferente do padrão).
      */
     public function file(?string $provider = null, ?string $companySlug = null): File
     {
