@@ -1,121 +1,118 @@
-# AiHub Module - Integração Extensível de IA para Laravel
+# AiHub Module - Extensible AI Integration for Laravel
 
-Este módulo fornece uma camada de abstração e comandos Artisan para integrar diferentes provedores de IA (como OpenAI, Anthropic, etc.) em aplicações Laravel, com foco inicial em funcionalidades de Assistentes, Threads e Vector Stores para RAG (Retrieval Augmented Generation).
+This module provides an abstraction layer and Artisan commands to integrate different AI providers (such as OpenAI, Anthropic, etc.) into Laravel applications, with initial focus on Assistant, Threads and Vector Stores functionalities for RAG (Retrieval Augmented Generation).
 
-## Visão Geral
+## Overview
 
-O **AiHub Module** foi projetado com uma arquitetura flexível para permitir a fácil adição de novos provedores de IA. Ele atua como um hub central, desacoplando sua aplicação da implementação específica de cada provedor.
+The **AiHub Module** was designed with a flexible architecture to allow easy addition of new AI providers. It acts as a central hub, decoupling your application from each provider's specific implementation.
 
-O módulo oferece comandos para gerenciar funcionalidades comuns de IA, inicialmente implementadas para OpenAI:
+The module offers commands to manage common AI functionalities, initially implemented for OpenAI:
 
-1.  **Assistentes**: Criar, listar, atualizar e deletar assistentes de IA.
-2.  **Vector Stores**: Gerenciar bases de conhecimento para RAG (criar, listar, vincular, remover).
-3.  **Threads**: Gerenciar conversas com assistentes (criar, listar mensagens, enviar mensagens).
+1. **Assistants**: Create, list, update and delete AI assistants.
+2. **Vector Stores**: Manage knowledge bases for RAG (create, list, link, remove).
+3. **Threads**: Manage conversations with assistants (create, list messages, send messages).
 
-Todos os comandos e a estrutura de serviço seguem um padrão de design consistente, com separação clara de responsabilidades e encapsulamento adequado.
-## Arquitetura e Extensibilidade
+All commands and service structure follow a consistent design pattern, with clear separation of responsibilities and proper encapsulation.
 
-A força deste módulo reside em sua arquitetura, que facilita a integração de novos provedores de IA:
+## Architecture and Extensibility
 
-*   **Contracts (Contratos)**: Interfaces PHP que definem as operações comuns (Assistant, Thread, VectorStore, File, Ai). Sua aplicação interage apenas com esses contratos.
-*   **Clients (Clientes)**: Implementações específicas dos contratos para cada provedor de IA (ex: `Modules\AiHub\Ai\Clients\OpenAi\OpenAi`).
-*   **Factory (Fábrica)**: A classe `AiFactory` é responsável por criar a instância correta do cliente de IA com base na configuração ou no provedor solicitado.
-*   **Service (Serviço Principal)**: A classe `AiService` atua como uma fachada, utilizando a Factory para obter o cliente correto e expor os serviços (assistant(), thread(), etc.) para sua aplicação.
+The strength of this module lies in its architecture, which facilitates the integration of new AI providers:
 
-Para adicionar um novo provedor de IA, você geralmente precisaria:
+* **Contracts**: PHP interfaces that define common operations (Assistant, Thread, VectorStore, File, Ai). Your application interacts only with these contracts.
+* **Clients**: Specific implementations of contracts for each AI provider (ex: `Modules\AiHub\Ai\Clients\OpenAi\OpenAi`).
+* **Factory**: The `AiFactory` class is responsible for creating the correct AI client instance based on configuration or requested provider.
+* **Service**: The `AiService` class acts as a facade, using the Factory to get the correct client and expose services (assistant(), thread(), etc.) to your application.
 
-1.  Criar as classes de Cliente para o novo provedor, implementando os contratos existentes.
-2.  Adicionar uma nova entrada na `AiFactory` para instanciar o novo cliente.
-3.  Configurar as chaves de API e defaults para o novo provedor no arquivo de configuração do módulo.
+To add a new AI provider, you would typically need to:
 
-## Comandos Disponíveis
+1. Create Client classes for the new provider, implementing existing contracts.
+2. Add a new entry in `AiFactory` to instantiate the new client.
+3. Configure API keys and defaults for the new provider in the module's configuration file.
 
-### Assistentes
+## Available Commands
 
-| Comando | Descrição |
+### Assistants
+
+| Command | Description |
 |---------|-----------|
-| `ai:assistant-create [name] [instructions]` | Cria um novo assistente OpenAI |
-| `ai:assistant-list [company] [--interactive]` | Lista todos os assistentes disponíveis |
-| `ai:assistant-update [name]` | Atualiza um assistente existente |
-| `ai:assistant-delete [name]` | Remove um assistente existente |
+| `ai:assistant-create [name] [instructions]` | Creates a new OpenAI assistant |
+| `ai:assistant-list [company] [--interactive]` | Lists all available assistants |
+| `ai:assistant-update [name]` | Updates an existing assistant |
+| `ai:assistant-delete [name]` | Removes an existing assistant |
 
-### Vector Stores (Bases de Conhecimento)
+### Vector Stores (Knowledge Bases)
 
-| Comando | Descrição |
+| Command | Description |
 |---------|-----------|
-| `ai:knowledge-add [company] [--name=] [--description=] [--interactive]` | Cria uma nova Vector Store para documentos |
-| `ai:knowledge-list [company] [--interactive]` | Lista todas as bases de conhecimento |
-| `ai:knowledge-link [company] [--interactive]` | Associa uma Vector Store a um Assistente |
-| `ai:knowledge-remove [company] [--interactive]` | Remove uma Vector Store |
+| `ai:knowledge-add [company] [--name=] [--description=] [--interactive]` | Creates a new Vector Store for documents |
+| `ai:knowledge-list [company] [--interactive]` | Lists all knowledge bases |
+| `ai:knowledge-link [company] [--interactive]` | Links a Vector Store to an Assistant |
+| `ai:knowledge-remove [company] [--interactive]` | Removes a Vector Store |
 
-### Threads (Conversas)
+### Threads (Conversations)
 
-| Comando | Descrição |
+| Command | Description |
 |---------|-----------|
-| `ai:chat-start [company] [--interactive]` | Inicia uma nova conversa com um assistente |
-| `ai:chat-active [company] [--interactive]` | Lista todas as conversas ativas |
-| `ai:chat-list [thread_id] [--limit=10] [--interactive]` | Lista as mensagens de uma conversa |
-| `ai:chat-send [thread_id] [--message=] [--interactive]` | Envia uma mensagem para uma conversa existente |
+| `ai:chat-start [company] [--interactive]` | Starts a new conversation with an assistant |
+| `ai:chat-active [company] [--interactive]` | Lists all active conversations |
+| `ai:chat-list [thread_id] [--limit=10] [--interactive]` | Lists messages from a conversation |
+| `ai:chat-send [thread_id] [--message=] [--interactive]` | Sends a message to an existing conversation |
 
-## Estrutura e Padrões de Design
+## Structure and Design Patterns
 
-Todos os comandos foram implementados seguindo princípios SOLID, especialmente o princípio de responsabilidade única (SRP). Cada comando segue a mesma estrutura geral:
+All commands were implemented following SOLID principles, especially the Single Responsibility Principle (SRP). Each command follows the same general structure:
 
-1. **Propriedades da classe**: Armazenam o estado do comando durante a execução
-2. **Método handle()**: Ponto de entrada principal, coordena o fluxo de execução
-3. **Métodos específicos**: Cada responsabilidade tem seu próprio método dedicado
-4. **Tratamento de erros**: Implementado em cada etapa para garantir robustez
+1. **Class properties**: Store the command's state during execution
+2. **handle() method**: Main entry point, coordinates execution flow
+3. **Specific methods**: Each responsibility has its own dedicated method
+4. **Error handling**: Implemented at each step to ensure robustness
 
-## Modo Interativo
+## Interactive Mode
 
-Todos os comandos suportam um modo interativo (flag `--interactive`), que orienta o usuário através de diálogos. Este modo é especialmente útil para usuários iniciantes.
+All commands support an interactive mode (flag `--interactive`), which guides the user through dialogs. This mode is especially useful for beginners.
 
-## Exemplos de Uso
+## Usage Examples
 
-### Criar um novo assistente:
+### Create a new assistant:
 
 ```bash
-php artisan ai:assistant-create "Assistente de Suporte" "Este assistente ajuda com suporte técnico"
+php artisan ai:assistant-create "Support Assistant" "This assistant helps with technical support"
 ```
 
-### Listar assistentes disponíveis:
+### List available assistants:
 
 ```bash
-php artisan ai:assistant-list minha-empresa
+php artisan ai:assistant-list my-company
 ```
 
-### Criar uma base de conhecimento:
+### Create a knowledge base:
 
 ```bash
-php artisan ai:knowledge-add minha-empresa --name="Documentação Técnica" --description="Base de conhecimento para documentação técnica"
+php artisan ai:knowledge-add my-company --name="Technical Documentation" --description="Knowledge base for technical documentation""
 ```
 
-### Vincular uma base de conhecimento a um assistente:
-
+### Link a knowledge base to an assistant:
 ```bash
-php artisan ai:knowledge-link minha-empresa
+php artisan ai:knowledge-link my-company
 ```
 
-### Iniciar uma nova conversa:
-
+### Start a new conversation:
 ```bash
-php artisan ai:chat-start minha-empresa --interactive
+php artisan ai:chat-start my-company --interactive
 ```
 
 ### Enviar uma mensagem:
 
 ```bash
-php artisan ai:chat-send --message="Olá, preciso de ajuda com configuração"
+php artisan ai:chat-send --message="Hello, I need help with configuration"
 ```
 
-## Requisitos
-
+## Requirements
 - PHP 8.1+
 - Laravel 10+
-- Conta OpenAI com acesso à API de Assistentes
-- Módulo AiHub configurado corretamente
-
-## Estrutura de Arquivos
+- OpenAI account with access to Assistants API
+- AiHub module properly configured
+## File Structure
 
 ```
 Modules/AiHub/
@@ -170,26 +167,25 @@ Modules/AiHub/
     └── aihub.php
 ```
 
-## Boas Práticas Implementadas
-1. Responsabilidade Única : Cada método e classe tem uma única responsabilidade bem definida.
-2. Encapsulamento : Variáveis de estado são propriedades da classe, não variáveis locais.
-3. Documentação : Todos os métodos possuem comentários de documentação (PHPDoc).
-4. Tratamento de Erros : Pontos de falha são tratados e reportados adequadamente.
-5. Feedback ao Usuário : Mensagens claras sobre o progresso da operação.
-6. Validação de Entrada : Dados fornecidos pelo usuário são validados antes do uso.
-7. Fluxo de Controle : O fluxo de execução é claro e consistente entre comandos.
-8. Extensibilidade : Arquitetura baseada em contratos e fábrica para fácil adição de novos provedores.
+## Best Practices Implemented
+1. Single Responsibility: Each method and class has a single well-defined responsibility.
+2. Encapsulation: State variables are class properties, not local variables.
+3. Documentation: All methods have documentation comments (PHPDoc).
+4. Error Handling: Failure points are properly handled and reported.
+5. User Feedback: Clear messages about operation progress.
+6. Input Validation: User-provided data is validated before use.
+7. Control Flow: Execution flow is clear and consistent between commands.
+8. Extensibility: Contract-based architecture and factory for easy addition of new providers.
+## Contributing
+This module was built to be extensible! Your contribution is very welcome. If you're interested in the architecture and would like to add support for another AI provider (such as Anthropic, Google AI, etc.), feel free to:
 
-## Contribuindo
+1. Fork this repository.
+2. Implement Client classes for the new provider, following existing contracts.
+3. Update AiFactory and configuration to include the new provider.
+4. Submit a Pull Request with your changes.
+   Together, we can make this module a robust hub for integrating various AIs into Laravel projects!
 
-Este módulo foi construído para ser extensível! Sua contribuição é muito bem-vinda. Se você se interessou pela arquitetura e gostaria de adicionar suporte a outro provedor de IA (como Anthropic, Google AI, etc.), sinta-se à vontade para:
-
-1. Fazer um fork deste repositório.
-2. Implementar as classes de Cliente para o novo provedor, seguindo os contratos existentes.
-3. Atualizar a AiFactory e a configuração para incluir o novo provedor.
-4. Enviar um Pull Request com suas mudanças.
-Juntos, podemos tornar este módulo um hub robusto para integração de diversas IAs em projetos Laravel!
-
----
-
-© 2025 - Desenvolvido com Laravel, OpenAI PHP SDK, laravel-modules e a comunidade!
+## License
+This module is open-source and available under the MIT license.
+## Credits  
+© 2025 - Developed with Laravel, OpenAI PHP SDK, laravel-modules and the community!
