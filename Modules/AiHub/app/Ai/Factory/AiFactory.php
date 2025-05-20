@@ -20,7 +20,7 @@ class AiFactory
      */
     public function create(?string $provider = null, ?string $companySlug = null): Ai
     {
-        $provider = $provider ?? Config::get('AiHub.ai_provider');
+        $provider = $provider ?? Config::get('aihub.ai_provider');
         
         switch (strtolower($provider)) {
             case 'openai':
@@ -41,11 +41,11 @@ class AiFactory
     protected function createOpenAiClient(?string $companySlug): OpenAi
     {
         // Usar o mesmo padrão de configuração dos outros serviços
-        $apiKey = Config::get('AiHub.providers.openai.api_key');
+        $apiKey = Config::get('aihub.providers.openai.api_key');
         
         // Verificar também no caminho alternativo conforme configuração fornecida
         if (!$apiKey) {
-            $apiKey = Config::get('AiHub.openai.api_key');
+            $apiKey = Config::get('aihub.openai.api_key');
         }
 
         if (!$apiKey) {
@@ -56,9 +56,9 @@ class AiFactory
         $client = \OpenAI::client($apiKey);
 
         // Obter o modelo padrão
-        $defaultModel = Config::get('AiHub.providers.openai.model');
+        $defaultModel = Config::get('aihub.providers.openai.model');
         if (!$defaultModel) {
-            $defaultModel = Config::get('AiHub.openai.model', 'gpt-4o');
+            $defaultModel = Config::get('aihub.openai.model', 'gpt-4o');
         }
 
         // Instanciar todos os serviços com os parâmetros corretos

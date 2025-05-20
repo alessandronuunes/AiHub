@@ -1,16 +1,32 @@
-# OpenAI RAG Module - Comandos Artisan
+# AiHub Module - Integração Extensível de IA para Laravel
 
-Este módulo fornece uma série de comandos Artisan para gerenciar Assistentes, Threads e Vector Stores no OpenAI RAG (Retrieval Augmented Generation).
+Este módulo fornece uma camada de abstração e comandos Artisan para integrar diferentes provedores de IA (como OpenAI, Anthropic, etc.) em aplicações Laravel, com foco inicial em funcionalidades de Assistentes, Threads e Vector Stores para RAG (Retrieval Augmented Generation).
 
 ## Visão Geral
 
-O módulo oferece comandos para:
+O **AiHub Module** foi projetado com uma arquitetura flexível para permitir a fácil adição de novos provedores de IA. Ele atua como um hub central, desacoplando sua aplicação da implementação específica de cada provedor.
 
-1. **Assistentes**: Criar, listar, atualizar e deletar assistentes OpenAI
-2. **Vector Stores**: Criar, listar, vincular e remover bases de conhecimento
-3. **Threads**: Criar conversas, listar mensagens e enviar mensagens para assistentes
+O módulo oferece comandos para gerenciar funcionalidades comuns de IA, inicialmente implementadas para OpenAI:
 
-Todos os comandos seguem um padrão de design consistente, com separação clara de responsabilidades e encapsulamento adequado.
+1.  **Assistentes**: Criar, listar, atualizar e deletar assistentes de IA.
+2.  **Vector Stores**: Gerenciar bases de conhecimento para RAG (criar, listar, vincular, remover).
+3.  **Threads**: Gerenciar conversas com assistentes (criar, listar mensagens, enviar mensagens).
+
+Todos os comandos e a estrutura de serviço seguem um padrão de design consistente, com separação clara de responsabilidades e encapsulamento adequado.
+## Arquitetura e Extensibilidade
+
+A força deste módulo reside em sua arquitetura, que facilita a integração de novos provedores de IA:
+
+*   **Contracts (Contratos)**: Interfaces PHP que definem as operações comuns (Assistant, Thread, VectorStore, File, Ai). Sua aplicação interage apenas com esses contratos.
+*   **Clients (Clientes)**: Implementações específicas dos contratos para cada provedor de IA (ex: `Modules\AiHub\Ai\Clients\OpenAi\OpenAi`).
+*   **Factory (Fábrica)**: A classe `AiFactory` é responsável por criar a instância correta do cliente de IA com base na configuração ou no provedor solicitado.
+*   **Service (Serviço Principal)**: A classe `AiService` atua como uma fachada, utilizando a Factory para obter o cliente correto e expor os serviços (assistant(), thread(), etc.) para sua aplicação.
+
+Para adicionar um novo provedor de IA, você geralmente precisaria:
+
+1.  Criar as classes de Cliente para o novo provedor, implementando os contratos existentes.
+2.  Adicionar uma nova entrada na `AiFactory` para instanciar o novo cliente.
+3.  Configurar as chaves de API e defaults para o novo provedor no arquivo de configuração do módulo.
 
 ## Comandos Disponíveis
 
@@ -97,12 +113,12 @@ php artisan ai:chat-send --message="Olá, preciso de ajuda com configuração"
 - PHP 8.1+
 - Laravel 10+
 - Conta OpenAI com acesso à API de Assistentes
-- Módulo OpenAiRag configurado corretamente
+- Módulo AiHub configurado corretamente
 
 ## Estrutura de Arquivos
 
 ```
-Modules/OpenAiRag/
+Modules/AiHub/
 ├── Console/
 │   ├── Ia/
 │   │   ├── Assistant/
@@ -126,31 +142,54 @@ Modules/OpenAiRag/
 │   ├── Message.php
 │   ├── Thread.php
 │   └── VectorStore.php
-└── Services/
-    ├── OpenAIService.php
-    ├── ThreadService.php
-    └── VectorStoreService.php
+├── Ai/
+│   ├── Contracts/
+│   │   ├── Ai.php
+│   │   ├── Assistant.php
+│   │   ├── Thread.php
+│   │   ├── VectorStore.php
+│   │   └── File.php
+│   │
+│   ├── Clients/
+│   │   ├── OpenAi/
+│   │   │   ├── OpenAi.php
+│   │   │   ├── OpenAiAssistant.php
+│   │   │   ├── OpenAiThread.php
+│   │   │   ├── OpenAiVectorStore.php
+│   │   │   └── OpenAiFile.php
+│   │   │
+│   │   └── Anthropic/
+│   │       └── ... (Exemplo para futuros provedores)
+│   │
+│   ├── Factory/
+│   │   └── AiFactory.php
+│   │
+│   ├── AiService.php
+│   └── AiServiceProvider.php
+└── config/
+    └── aihub.php
 ```
 
 ## Boas Práticas Implementadas
-
-1. **Responsabilidade Única**: Cada método tem uma única responsabilidade bem definida
-2. **Encapsulamento**: Variáveis de estado são propriedades da classe, não variáveis locais
-3. **Documentação**: Todos os métodos possuem comentários de documentação (PHPDoc)
-4. **Tratamento de Erros**: Pontos de falha são tratados e reportados adequadamente
-5. **Feedback ao Usuário**: Mensagens claras sobre o progresso da operação
-6. **Validação de Entrada**: Dados fornecidos pelo usuário são validados antes do uso
-7. **Fluxo de Controle**: O fluxo de execução é claro e consistente entre comandos
+1. Responsabilidade Única : Cada método e classe tem uma única responsabilidade bem definida.
+2. Encapsulamento : Variáveis de estado são propriedades da classe, não variáveis locais.
+3. Documentação : Todos os métodos possuem comentários de documentação (PHPDoc).
+4. Tratamento de Erros : Pontos de falha são tratados e reportados adequadamente.
+5. Feedback ao Usuário : Mensagens claras sobre o progresso da operação.
+6. Validação de Entrada : Dados fornecidos pelo usuário são validados antes do uso.
+7. Fluxo de Controle : O fluxo de execução é claro e consistente entre comandos.
+8. Extensibilidade : Arquitetura baseada em contratos e fábrica para fácil adição de novos provedores.
 
 ## Contribuindo
 
-Para contribuir com este módulo:
+Este módulo foi construído para ser extensível! Sua contribuição é muito bem-vinda. Se você se interessou pela arquitetura e gostaria de adicionar suporte a outro provedor de IA (como Anthropic, Google AI, etc.), sinta-se à vontade para:
 
-1. Siga o mesmo padrão de design implementado nos comandos existentes
-2. Certifique-se de implementar tratamento de erros adequado
-3. Inclua comentários de documentação (PHPDoc) em todos os métodos
-4. Execute testes antes de submeter alterações
+1. Fazer um fork deste repositório.
+2. Implementar as classes de Cliente para o novo provedor, seguindo os contratos existentes.
+3. Atualizar a AiFactory e a configuração para incluir o novo provedor.
+4. Enviar um Pull Request com suas mudanças.
+Juntos, podemos tornar este módulo um hub robusto para integração de diversas IAs em projetos Laravel!
 
 ---
 
-© 2025 - Desenvolvido com Laravel, PHP e OpenAI
+© 2025 - Desenvolvido com Laravel, OpenAI PHP SDK, laravel-modules e a comunidade!

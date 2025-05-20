@@ -29,7 +29,7 @@ class OpenAi implements Ai
     {
         $this->client = $client;
         // Instancia os serviços específicos da OpenAI, passando o cliente SDK
-        $defaultModel = Config::get('AiHub.providers.openai.model');
+        $defaultModel = Config::get('aihub.providers.openai.model');
         $this->assistantService = new OpenAiAssistant($this->client, $defaultModel, $this->companySlug);
         $this->threadService = new OpenAiThread($this->client, $this->companySlug);
         $this->vectorStoreService = new OpenAiVectorStore($this->client, $this->companySlug);
@@ -47,7 +47,7 @@ class OpenAi implements Ai
         $this->companySlug = $companySlug;
         if ($this->assistantService instanceof OpenAiAssistant) {
             $this->assistantService = new OpenAiAssistant($this->client, 
-                Config::get('AiHub.providers.openai.model'), 
+                Config::get('aihub.providers.openai.model'), 
                 $companySlug);
         }
         if ($this->threadService instanceof OpenAiThread) {
